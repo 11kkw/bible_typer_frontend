@@ -1,4 +1,4 @@
-import type { Config } from "tailwindcss"
+import type { Config } from "tailwindcss";
 
 const config: Config = {
   content: [
@@ -9,21 +9,17 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        "pastel-blue": "#a7d8f0",
-        "pastel-green": "#a8d8c9",
-        "text-dark": "#1a202c",
-        "text-light": "#4a5568",
-        "bg-base": "#f7fafc",
-      },
-      boxShadow: {
-        apple: "0 4px 12px 0 rgba(0,0,0,0.1)",
-      },
-      transitionDuration: {
-        200: "200ms",
+        primary: "#A0D2DB",          // 밝은 파스텔 블루
+        "primary-dark": "#5EAAA8",   // 진한 민트톤 블루
+        "background-base": "#F8F9FA", // 페이지 배경
+        text: "#212529",             // 본문 텍스트
+        "text-subtle": "#6C757D",    // 서브 텍스트
+        border: "#E9ECEF",           // 경계선
+        card: "#FFFFFF",             // 카드/헤더 배경
       },
     },
   },
   plugins: [],
-}
+};
 
-export default config
+export default config;
