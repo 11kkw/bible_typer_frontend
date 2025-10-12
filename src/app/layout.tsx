@@ -1,10 +1,10 @@
+import ReactQueryProvider from "@/providers/ReactQueryProvider";
 import type { Metadata } from "next";
-import "./globals.css";
-import { Header } from "@/components/layout/Header";
-import { Footer } from "@/components/layout/Footer";
 import { Inter, Noto_Sans_KR } from "next/font/google";
 import localFont from "next/font/local";
+import "./globals.css";
 
+/* === 폰트 설정 === */
 const inter = Inter({
   subsets: ["latin"],
   weight: ["400", "500", "700"],
@@ -19,13 +19,14 @@ const noto = Noto_Sans_KR({
   display: "swap",
 });
 
-// ✅ Material Symbols Outlined (Variable Font)
 const materialSymbols = localFont({
-  src: "./fonts/MaterialSymbolsOutlined.ttf", // ✅ 수정됨
+  src: "./fonts/MaterialSymbolsOutlined.ttf", 
   variable: "--font-material-symbols",
-  display: "swap",
+  display: "swap",   
+  preload: true,     
 });
 
+/* === 메타데이터 === */
 export const metadata: Metadata = {
   title: "성경 타자",
   description: "성경 구절 타자 연습 서비스",
@@ -41,17 +42,11 @@ export default function RootLayout({
       lang="ko"
       className={`${inter.variable} ${noto.variable} ${materialSymbols.variable}`}
     >
-      <body className="bg-background text-foreground font-sans antialiased">
-        <div className="flex flex-col min-h-screen">
-          <Header />
-          <main className="flex-grow">
-            <div className="container-padded pt-4 pb-8 md:pt-6 md:pb-12">
-              {children}
-            </div>
-          </main>
-          <Footer />
-        </div>
-      </body>
-    </html>
+      <ReactQueryProvider>
+        <body className="bg-background text-foreground font-sans antialiased">
+          {children}
+        </body>
+      </ReactQueryProvider>
+    </html> 
   );
 }

@@ -21,7 +21,7 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-30 w-full border-b border-border bg-card/90 backdrop-blur-lg">
-      <div className="container-padded">
+      <div className="container-wide">
         <div className="flex h-16 items-center justify-between">
           {/* 로고 */}
           <Link href="/" className="flex items-center gap-2">

@@ -2,8 +2,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-/* === 다크 모드 variant 설정 === */
-@custom-variant dark (&:is(.dark *));
 
 /* === Tailwind theme 확장 (토큰 연결) === */
 @theme inline {
@@ -132,8 +130,8 @@
 
 /* === Utilities === */
 @layer utilities {
-  .container-padded {
-    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  .container-wide {
+  @apply mx-auto w-full max-w-[1400px] px-6;
   }
 
   /* 공용 버튼 */
