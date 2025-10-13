@@ -1,6 +1,6 @@
-import { loginApi } from "@/api/auth";
+import { loginApi, registerApi } from "@/api/auth";
 import { useAuthStore } from "@/lib/store/authStore";
-import { LoginRequest } from "@/types/api/auth";
+import { LoginRequest, RegisterRequest } from "@/types/api/auth";
 import { useMutation } from "@tanstack/react-query";
 
 export function useLogin() {
@@ -19,5 +19,11 @@ export function useLogin() {
     onError: (err) => {
       console.error("❌ 로그인 실패:", err);
     },
+  });
+}
+
+export function useRegister() {
+  return useMutation({
+    mutationFn: (data: RegisterRequest) => registerApi(data),
   });
 }

@@ -1,6 +1,35 @@
 "use client";
 
-export function VerseSelectForm() {
+import { useBibleVersionDetail } from "@/hooks/useBibleVersions";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+
+interface BibleVersion {
+  id: number;
+  name: string;
+}
+
+export default function VerseSelectForm({
+  versions,
+}: {
+  versions: BibleVersion[];
+}) {
+  const router = useRouter();
+  const [selectedVersionId, setSelectedVersionId] = useState<number | null>(
+    null
+  );
+  const [selectedBookId, setSelectedBookId] = useState<number | null>(null);
+  const [chapterStart, setChapterStart] = useState(1);
+  const [chapterEnd, setChapterEnd] = useState(1);
+
+  const { data: versionDetail } = useBibleVersionDetail(
+    selectedVersionId ?? undefined
+  );
+  const selectedBook = versionDetail?.books.find(
+    (b) => b.id === selectedBookId
+  );
+  const totalChapters = selectedBook?.total_chapters ?? 1;
+
   const commonSelectClass =
     "appearance-none w-full bg-white border border-border rounded-lg py-3 px-4 pr-10 " +
     "text-sm text-foreground transition duration-150 ease-in-out " +
@@ -28,24 +57,30 @@ export function VerseSelectForm() {
 
   return (
     <div className="card space-y-5">
-      {/* 성경 종류 선택 */}
+      {/* ✅ 서버 렌더링된 성경 버전 목록 */}
       <div>
         <label
           htmlFor="bible-version-select"
-          className="block text-sm font-medium text-foreground mb-2"
+          className="block text-sm font-medium mb-2"
         >
           성경 종류 선택
         </label>
         <div className="relative">
           <select
             id="bible-version-select"
-            name="bible_version"
-            defaultValue="개역개정"
+            value={selectedVersionId ?? ""}
+            onChange={(e) => {
+              setSelectedVersionId(Number(e.target.value));
+              setSelectedBookId(null);
+            }}
             className={commonSelectClass}
           >
-            <option>개역개정</option>
-            <option>새번역</option>
-            <option>NIV</option>
+            <option value="">선택하세요</option>
+            {versions.map((v) => (
+              <option key={v.id} value={v.id}>
+                {v.name}
+              </option>
+            ))}
           </select>
           {dropdownSvg}
         </div>
@@ -53,24 +88,27 @@ export function VerseSelectForm() {
 
       {/* 성경 선택 */}
       <div>
-        <label
-          htmlFor="book-select"
-          className="block text-sm font-medium text-foreground mb-2"
-        >
+        <label htmlFor="book-select" className="block text-sm font-medium mb-2">
           성경
         </label>
         <div className="relative">
           <select
             id="book-select"
-            name="book"
-            defaultValue="요한복음"
+            value={selectedBookId ?? ""}
+            onChange={(e) => {
+              setSelectedBookId(Number(e.target.value));
+              setChapterStart(1);
+              setChapterEnd(1);
+            }}
+            disabled={!versionDetail}
             className={commonSelectClass}
           >
-            <option>창세기</option>
-            <option>요한복음</option>
-            <option>시편</option>
-            <option>잠언</option>
-            <option>이사야</option>
+            <option value="">선택하세요</option>
+            {versionDetail?.books.map((book) => (
+              <option key={book.id} value={book.id}>
+                {book.title.trim()}
+              </option>
+            ))}
           </select>
           {dropdownSvg}
         </div>
@@ -81,20 +119,26 @@ export function VerseSelectForm() {
         <div>
           <label
             htmlFor="chapter-start"
-            className="block text-sm font-medium text-foreground mb-2"
+            className="block text-sm font-medium mb-2"
           >
             시작 장
           </label>
           <div className="relative">
             <select
               id="chapter-start"
-              name="chapter_start"
-              defaultValue="3"
+              value={chapterStart}
+              onChange={(e) => {
+                const newStart = Number(e.target.value);
+                setChapterStart(newStart);
+                if (chapterEnd < newStart) setChapterEnd(newStart);
+              }}
               className={commonSelectClass}
             >
-              <option>1</option>
-              <option>2</option>
-              <option>3</option>
+              {Array.from({ length: totalChapters }).map((_, i) => (
+                <option key={i + 1} value={i + 1}>
+                  {i + 1}
+                </option>
+              ))}
             </select>
             {dropdownSvg}
           </div>
@@ -103,20 +147,25 @@ export function VerseSelectForm() {
         <div>
           <label
             htmlFor="chapter-end"
-            className="block text-sm font-medium text-foreground mb-2"
+            className="block text-sm font-medium mb-2"
           >
             끝 장
           </label>
           <div className="relative">
             <select
               id="chapter-end"
-              name="chapter_end"
-              defaultValue="4"
+              value={chapterEnd}
+              onChange={(e) => setChapterEnd(Number(e.target.value))}
               className={commonSelectClass}
             >
-              <option>3</option>
-              <option>4</option>
-              <option>5</option>
+              {Array.from({ length: totalChapters })
+                .map((_, i) => i + 1)
+                .filter((n) => n >= chapterStart)
+                .map((n) => (
+                  <option key={n} value={n}>
+                    {n}
+                  </option>
+                ))}
             </select>
             {dropdownSvg}
           </div>
@@ -126,6 +175,12 @@ export function VerseSelectForm() {
       {/* 버튼 */}
       <button
         type="button"
+        onClick={() =>
+          router.push(
+            `/practice/start?version=${selectedVersionId}&book=${selectedBookId}&start=${chapterStart}&end=${chapterEnd}`
+          )
+        }
+        disabled={!selectedBookId}
         className="btn-primary w-full mt-2 py-3 px-6 text-base font-bold shadow-sm transition-transform duration-200 hover:scale-[1.02]"
       >
         타자 시작하기

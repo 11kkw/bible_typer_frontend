@@ -1,10 +1,12 @@
-"use client";
+import { fetchRandomVerses } from "@/api/bible";
 import { TypingArea } from "@/components/features/typing/TypingArea";
 
-export default function Page() {
+export default async function Page() {
+  const verses = await fetchRandomVerses(3);
+
   return (
     <main className="flex items-center justify-center min-h-screen p-8">
-      <TypingArea/>
+      <TypingArea initialVerses={verses} />
     </main>
   );
 }

@@ -1,3 +1,4 @@
+import { Toaster } from "@/components/ui/sonner";
 import ReactQueryProvider from "@/providers/ReactQueryProvider";
 import type { Metadata } from "next";
 import { Inter, Noto_Sans_KR } from "next/font/google";
@@ -20,10 +21,10 @@ const noto = Noto_Sans_KR({
 });
 
 const materialSymbols = localFont({
-  src: "./fonts/MaterialSymbolsOutlined.ttf", 
+  src: "./fonts/MaterialSymbolsOutlined.ttf",
   variable: "--font-material-symbols",
-  display: "swap",   
-  preload: true,     
+  display: "swap",
+  preload: true,
 });
 
 /* === 메타데이터 === */
@@ -45,8 +46,9 @@ export default function RootLayout({
       <ReactQueryProvider>
         <body className="bg-background text-foreground font-sans antialiased">
           {children}
+          <Toaster richColors closeButton />
         </body>
       </ReactQueryProvider>
-    </html> 
+    </html>
   );
 }

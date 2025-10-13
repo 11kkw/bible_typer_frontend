@@ -1,6 +1,18 @@
-import { VerseSelectForm } from "./VerseSelectForm";
+import VerseSelectForm from "./VerseSelectForm";
 
-export function VerseSelectSection() {
+interface BibleVersion {
+  id: number;
+  code: string;
+  name: string;
+  language: string;
+  publisher: string;
+}
+
+export default function VerseSelectSection({
+  versions,
+}: {
+  versions: BibleVersion[];
+}) {
   return (
     <div className="lg:col-span-2 space-y-8">
       <section>
@@ -9,7 +21,8 @@ export function VerseSelectSection() {
           타자하고 싶은 성경 구절을 선택하세요.
         </p>
       </section>
-      <VerseSelectForm />
+
+      <VerseSelectForm versions={versions} />
     </div>
   );
 }

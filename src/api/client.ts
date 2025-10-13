@@ -12,7 +12,7 @@ export async function apiClient(path: string, options: RequestInit = {}) {
       ...(options.headers || {}),
     },
     cache: "no-store",
-    credentials: "include", 
+    credentials: "include",
     ...options,
   });
 
@@ -20,12 +20,11 @@ export async function apiClient(path: string, options: RequestInit = {}) {
     let errorMessage = `API Error ${res.status}`;
 
     try {
-      // clone()으로 복제 → stream 중복 읽기 방지
       const data = await res.clone().json();
       errorMessage += data.detail ? `: ${data.detail}` : "";
     } catch {
       const text = await res.text();
-      errorMessage += `: ${text.slice(0, 200)}`; 
+      errorMessage += `: ${text.slice(0, 200)}`;
     }
 
     throw new Error(errorMessage);
