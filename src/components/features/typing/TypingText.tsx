@@ -1,36 +1,55 @@
+"use client";
+
 import { composeHangul, decomposeHangulString } from "@/lib/utils/disassemble";
-import { HangulChar } from "@/types/models/Hangul";
+import { useCallback, useMemo } from "react";
 
-export function TypingText({ text, typed }: { text: string; typed: string }) {
-  const originalDecomposed: HangulChar[] = decomposeHangulString(text);
-  const typedDecomposed: HangulChar[] = decomposeHangulString(typed);
+interface TypingTextProps {
+  text: string;
+  typed: string;
+}
 
-  const compared = originalDecomposed.map((origChar, i) => {
-    const typedChar = typedDecomposed[i];
-    if (!typedChar) return { char: origChar.char, status: "pending" };
+export function TypingText({ text, typed }: TypingTextProps) {
+  // 🔸 따옴표 통일 (함수 외부로 빼거나 useCallback으로 메모이징)
+  const normalizeQuotes = useCallback((str: string) => {
+    return str.replace(/'/g, "`").replace(/[‘’]/g, "`").replace(/[“”]/g, '"');
+  }, []);
 
-    const origParts = origChar.parts;
-    const typedParts = typedChar.parts;
+  const compared = useMemo(() => {
+    const original = decomposeHangulString(normalizeQuotes(text));
+    const typedChars = decomposeHangulString(normalizeQuotes(typed));
 
-    const allCorrect =
-      origParts.length === typedParts.length &&
-      origParts.every((p, idx) => p === typedParts[idx]);
+    return original.map((origChar, i) => {
+      const typedChar = typedChars[i];
+      if (!typedChar) return { char: origChar.char, status: "pending" };
 
-    if (allCorrect) return { char: origChar.char, status: "correct" };
+      const origParts = origChar.parts;
+      const typedParts = typedChar.parts;
 
-    const partialMatch = typedParts.every((p, idx) => p === origParts[idx]);
-    if (partialMatch && typedParts.length < origParts.length) {
-      const composed = composeHangul(
-        typedParts[0],
-        typedParts[1],
-        typedParts[2]
+      const composedTyped = composeHangul(
+        typedParts[0] ?? "",
+        typedParts[1] ?? "",
+        typedParts[2] ?? ""
       );
-      return { char: composed, status: "current" };
-    }
 
-    const wrong = composeHangul(typedParts[0], typedParts[1], typedParts[2]);
-    return { char: wrong, status: "incorrect" };
-  });
+      const isCurrent =
+        i === typedChars.length - 1 && typed.length < text.length;
+
+      if (isCurrent) {
+        const partialMismatch = typedParts.some(
+          (part, idx) => part !== origParts[idx]
+        );
+        return {
+          char: composedTyped,
+          status: partialMismatch ? "incorrect" : "current",
+        };
+      }
+
+      if (composedTyped === origChar.char) {
+        return { char: origChar.char, status: "correct" };
+      }
+      return { char: composedTyped, status: "incorrect" };
+    });
+  }, [text, typed, normalizeQuotes]);
 
   return (
     <div className="typed-text whitespace-pre-wrap">
@@ -38,12 +57,12 @@ export function TypingText({ text, typed }: { text: string; typed: string }) {
         <span
           key={i}
           className={
-            status === "current"
-              ? "relative after:absolute after:w-[2px] after:h-9 after:bg-[#68D391] after:bottom-0 after:left-0" // ✅ 글자 보이게
-              : status === "correct"
+            status === "correct"
               ? "text-[#2D3748]"
               : status === "incorrect"
               ? "text-[#F56565] underline decoration-[#F56565]"
+              : status === "current"
+              ? "text-[#2D3748]"
               : "text-transparent"
           }
         >
