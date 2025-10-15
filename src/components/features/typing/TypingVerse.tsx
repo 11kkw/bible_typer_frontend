@@ -53,11 +53,9 @@ export function TypingVerse({
         onChange={setUserTyped}
         onNext={onNext}
         onPrev={onPrev}
-        // ⬇️ 추가
         targetLength={verse.text.length}
         autoNextOnComplete={true}
         autoNextOnOverflow={true}
-        // disabled={!isActive} // 필요하면 활성 절만 입력 허용
       />
     </div>
   );

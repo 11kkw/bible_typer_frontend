@@ -1,5 +1,5 @@
 "use client";
-import { forwardRef, useCallback, useRef } from "react";
+import { forwardRef, useCallback, useEffect, useRef } from "react";
 
 interface TypingInputProps {
   value: string;
@@ -9,6 +9,7 @@ interface TypingInputProps {
   targetLength?: number; // 원문 길이
   autoNextOnComplete?: boolean; // 길이 다 차면 자동 이동
   autoNextOnOverflow?: boolean; // 줄바꿈/오버플로우면 자동 이동
+  enterToNext?: boolean; // Enter로 다음 절 이동 (기본 true)
 }
 
 export const TypingInput = forwardRef<HTMLTextAreaElement, TypingInputProps>(
@@ -21,34 +22,81 @@ export const TypingInput = forwardRef<HTMLTextAreaElement, TypingInputProps>(
       targetLength,
       autoNextOnComplete = true,
       autoNextOnOverflow = false,
+      enterToNext = true,
     },
     ref
   ) => {
-    // onNext 중복 호출 방지 락
-    const nextLockRef = useRef(false);
+    // 최신 props를 ref에 싱크 -> 핸들러는 고정
+    const cfgRef = useRef({
+      onNext,
+      onPrev,
+      targetLength,
+      autoNextOnComplete,
+      autoNextOnOverflow,
+      enterToNext,
+    });
+    useEffect(() => {
+      cfgRef.current = {
+        onNext,
+        onPrev,
+        targetLength,
+        autoNextOnComplete,
+        autoNextOnOverflow,
+        enterToNext,
+      };
+    }, [
+      onNext,
+      onPrev,
+      targetLength,
+      autoNextOnComplete,
+      autoNextOnOverflow,
+      enterToNext,
+    ]);
 
+    const nextLockRef = useRef(false);
+    const lockTimerRef = useRef<number | null>(null);
     const safeNext = () => {
       if (nextLockRef.current) return;
       nextLockRef.current = true;
-      onNext?.();
-      setTimeout(() => (nextLockRef.current = false), 150);
+      cfgRef.current.onNext?.();
+      lockTimerRef.current = window.setTimeout(() => {
+        nextLockRef.current = false;
+        lockTimerRef.current = null;
+      }, 150);
     };
+    useEffect(
+      () => () => {
+        if (lockTimerRef.current) {
+          clearTimeout(lockTimerRef.current);
+        }
+      },
+      []
+    );
 
-    const tryAutoNext = (el: HTMLTextAreaElement, val: string) => {
-      // 1) 길이 기준
+    const measureOverflowAndMaybeNext = (
+      el: HTMLTextAreaElement,
+      val: string
+    ) => {
+      const { targetLength, autoNextOnComplete, autoNextOnOverflow } =
+        cfgRef.current;
+
+      // 1) 길이 기준 (>= 로 수정)
       if (autoNextOnComplete && typeof targetLength === "number") {
-        if (val.length > targetLength) {
+        if (val.length >= targetLength) {
           safeNext();
           return;
         }
       }
-      // 2) 오버플로우 기준
+
+      // 2) 오버플로우 기준 (레이아웃 확정 후 측정)
       if (autoNextOnOverflow) {
-        const hasNewline = val.includes("\n");
-        const overflowed = el.scrollHeight > el.clientHeight;
-        if (hasNewline || overflowed) {
-          safeNext();
-        }
+        requestAnimationFrame(() => {
+          const hasNewline = val.includes("\n");
+          const overflowed = el.scrollHeight > el.clientHeight;
+          if (hasNewline || overflowed) {
+            safeNext();
+          }
+        });
       }
     };
 
@@ -56,37 +104,38 @@ export const TypingInput = forwardRef<HTMLTextAreaElement, TypingInputProps>(
       (e: React.FormEvent<HTMLTextAreaElement>) => {
         const nextVal = e.currentTarget.value;
         onChange(nextVal);
-        // 현재 값으로 검사 (stale value 방지)
-        tryAutoNext(e.currentTarget, nextVal);
+        measureOverflowAndMaybeNext(e.currentTarget, nextVal);
       },
-      [onChange, targetLength, autoNextOnComplete, autoNextOnOverflow]
+      [onChange]
     );
 
     const handleCompositionEnd = useCallback(
       (e: React.CompositionEvent<HTMLTextAreaElement>) => {
-        tryAutoNext(e.currentTarget, e.currentTarget.value);
+        const el = e.currentTarget;
+        measureOverflowAndMaybeNext(el, el.value);
       },
-      [targetLength, autoNextOnComplete, autoNextOnOverflow]
+      []
     );
 
     const handleKeyDown = useCallback(
       (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-        // 한글 IME 조합 중 Enter는 무시 (중복 이동 예방)
+        // IME 조합 중 Enter는 무시 (중복 이동 예방)
         // @ts-ignore
         if (e.isComposing || (e.nativeEvent as any)?.isComposing) return;
 
-        if (e.key === "Enter") {
+        if (e.key === "Enter" && cfgRef.current.enterToNext) {
           e.preventDefault();
-          safeNext(); // ← Enter 이동도 락으로 보호
+          safeNext();
           return;
         }
+
         if (e.key === "Backspace" && e.currentTarget.value.length === 0) {
           e.preventDefault();
-          onPrev?.();
+          cfgRef.current.onPrev?.();
           return;
         }
       },
-      [onPrev]
+      []
     );
 
     return (
