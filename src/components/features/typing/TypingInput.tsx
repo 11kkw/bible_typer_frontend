@@ -6,10 +6,10 @@ interface TypingInputProps {
   onChange: (v: string) => void;
   onNext?: () => void;
   onPrev?: () => void;
-  targetLength?: number; // 원문 길이
-  autoNextOnComplete?: boolean; // 길이 다 차면 자동 이동
-  autoNextOnOverflow?: boolean; // 줄바꿈/오버플로우면 자동 이동
-  enterToNext?: boolean; // Enter로 다음 절 이동 (기본 true)
+  targetLength?: number; // 목표 음절 수
+  autoNextOnComplete?: boolean;
+  autoNextOnOverflow?: boolean;
+  enterToNext?: boolean;
 }
 
 export const TypingInput = forwardRef<HTMLTextAreaElement, TypingInputProps>(
@@ -26,7 +26,6 @@ export const TypingInput = forwardRef<HTMLTextAreaElement, TypingInputProps>(
     },
     ref
   ) => {
-    // 최신 props를 ref에 싱크 -> 핸들러는 고정
     const cfgRef = useRef({
       onNext,
       onPrev,
@@ -64,14 +63,18 @@ export const TypingInput = forwardRef<HTMLTextAreaElement, TypingInputProps>(
         lockTimerRef.current = null;
       }, 150);
     };
-    useEffect(
-      () => () => {
-        if (lockTimerRef.current) {
-          clearTimeout(lockTimerRef.current);
-        }
-      },
-      []
-    );
+    useEffect(() => {
+      return () => {
+        if (lockTimerRef.current) clearTimeout(lockTimerRef.current);
+      };
+    }, []);
+
+    const countCompletedCharacters = (text: string) => {
+      // 자모 범위: ㄱ-ㅣ (U+3131–U+3163)
+      // 완성된 한글: 가-힣 (U+AC00–U+D7A3)
+      // 자모만 제거 후 남은 길이를 계산
+      return text.normalize("NFC").replace(/[\u3131-\u3163]/g, "").length;
+    };
 
     const measureOverflowAndMaybeNext = (
       el: HTMLTextAreaElement,
@@ -80,15 +83,18 @@ export const TypingInput = forwardRef<HTMLTextAreaElement, TypingInputProps>(
       const { targetLength, autoNextOnComplete, autoNextOnOverflow } =
         cfgRef.current;
 
-      // 1) 길이 기준 (>= 로 수정)
+      // ✅ 조합 완료된 문자 기준으로 판단
+      const completedLen = countCompletedCharacters(val);
+
+      // 1) 완성된 글자 수 기준
       if (autoNextOnComplete && typeof targetLength === "number") {
-        if (val.length >= targetLength) {
+        if (completedLen >= targetLength) {
           safeNext();
           return;
         }
       }
 
-      // 2) 오버플로우 기준 (레이아웃 확정 후 측정)
+      // 2) 오버플로우 기준
       if (autoNextOnOverflow) {
         requestAnimationFrame(() => {
           const hasNewline = val.includes("\n");
@@ -119,7 +125,7 @@ export const TypingInput = forwardRef<HTMLTextAreaElement, TypingInputProps>(
 
     const handleKeyDown = useCallback(
       (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-        // IME 조합 중 Enter는 무시 (중복 이동 예방)
+        // IME 조합 중 Enter는 무시
         // @ts-ignore
         if (e.isComposing || (e.nativeEvent as any)?.isComposing) return;
 
@@ -148,11 +154,7 @@ export const TypingInput = forwardRef<HTMLTextAreaElement, TypingInputProps>(
         spellCheck={false}
         autoCorrect="off"
         autoCapitalize="off"
-        className="
-          absolute inset-0 w-full h-full
-          text-transparent caret-[#68D391]
-          cursor-text z-10 resize-none bg-transparent border-none p-0
-        "
+        className="absolute inset-0 w-full h-full text-transparent caret-[#68D391] cursor-text z-10 resize-none bg-transparent border-none p-0"
       />
     );
   }

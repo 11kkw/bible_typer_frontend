@@ -1,6 +1,7 @@
 "use client";
 
 import { useBibleVersionDetail } from "@/hooks/useBibleVersions";
+import { useVerseSelectStore } from "@/lib/store/useVerseSelectStore";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -15,12 +16,18 @@ export default function VerseSelectForm({
   versions: BibleVersion[];
 }) {
   const router = useRouter();
-  const [selectedVersionId, setSelectedVersionId] = useState<number | null>(
-    null
-  );
-  const [selectedBookId, setSelectedBookId] = useState<number | null>(null);
-  const [chapterStart, setChapterStart] = useState(1);
-  const [chapterEnd, setChapterEnd] = useState(1);
+  const [isLoading, setIsLoading] = useState(false); // ✅ 로딩 상태
+
+  const {
+    selectedVersionId,
+    selectedBookId,
+    chapterStart,
+    chapterEnd,
+    setVersion,
+    setBook,
+    setChapterStart,
+    setChapterEnd,
+  } = useVerseSelectStore();
 
   const { data: versionDetail } = useBibleVersionDetail(
     selectedVersionId ?? undefined
@@ -55,9 +62,15 @@ export default function VerseSelectForm({
     </svg>
   );
 
+  const handleStartTyping = async () => {
+    if (!selectedBookId || !selectedVersionId) return;
+    setIsLoading(true); // ✅ 로딩 시작
+    router.push("/");
+  };
+
   return (
     <div className="card space-y-5">
-      {/* ✅ 서버 렌더링된 성경 버전 목록 */}
+      {/* ✅ 성경 버전 선택 */}
       <div>
         <label
           htmlFor="bible-version-select"
@@ -69,10 +82,7 @@ export default function VerseSelectForm({
           <select
             id="bible-version-select"
             value={selectedVersionId ?? ""}
-            onChange={(e) => {
-              setSelectedVersionId(Number(e.target.value));
-              setSelectedBookId(null);
-            }}
+            onChange={(e) => setVersion(Number(e.target.value))}
             className={commonSelectClass}
           >
             <option value="">선택하세요</option>
@@ -86,7 +96,7 @@ export default function VerseSelectForm({
         </div>
       </div>
 
-      {/* 성경 선택 */}
+      {/* ✅ 책 선택 */}
       <div>
         <label htmlFor="book-select" className="block text-sm font-medium mb-2">
           성경
@@ -95,11 +105,7 @@ export default function VerseSelectForm({
           <select
             id="book-select"
             value={selectedBookId ?? ""}
-            onChange={(e) => {
-              setSelectedBookId(Number(e.target.value));
-              setChapterStart(1);
-              setChapterEnd(1);
-            }}
+            onChange={(e) => setBook(Number(e.target.value))}
             disabled={!versionDetail}
             className={commonSelectClass}
           >
@@ -114,8 +120,9 @@ export default function VerseSelectForm({
         </div>
       </div>
 
-      {/* 시작 장 / 끝 장 */}
+      {/* ✅ 시작 장 / 끝 장 */}
       <div className="grid grid-cols-2 gap-4">
+        {/* 시작 장 */}
         <div>
           <label
             htmlFor="chapter-start"
@@ -127,11 +134,7 @@ export default function VerseSelectForm({
             <select
               id="chapter-start"
               value={chapterStart}
-              onChange={(e) => {
-                const newStart = Number(e.target.value);
-                setChapterStart(newStart);
-                if (chapterEnd < newStart) setChapterEnd(newStart);
-              }}
+              onChange={(e) => setChapterStart(Number(e.target.value))}
               className={commonSelectClass}
             >
               {Array.from({ length: totalChapters }).map((_, i) => (
@@ -144,6 +147,7 @@ export default function VerseSelectForm({
           </div>
         </div>
 
+        {/* 끝 장 */}
         <div>
           <label
             htmlFor="chapter-end"
@@ -172,18 +176,42 @@ export default function VerseSelectForm({
         </div>
       </div>
 
-      {/* 버튼 */}
+      {/* ✅ 버튼 (로딩 스피너 포함) */}
       <button
         type="button"
-        onClick={() =>
-          router.push(
-            `/practice/start?version=${selectedVersionId}&book=${selectedBookId}&start=${chapterStart}&end=${chapterEnd}`
-          )
-        }
-        disabled={!selectedBookId}
-        className="btn-primary w-full mt-2 py-3 px-6 text-base font-bold shadow-sm transition-transform duration-200 hover:scale-[1.02]"
+        onClick={handleStartTyping}
+        disabled={!selectedBookId || !selectedVersionId || isLoading}
+        className={`btn-primary w-full mt-2 py-3 px-6 text-base font-bold shadow-sm transition-transform duration-200 ${
+          isLoading ? "opacity-70 cursor-wait" : "hover:scale-[1.02]"
+        }`}
       >
-        타자 시작하기
+        {isLoading ? (
+          <span className="flex items-center justify-center gap-2">
+            <svg
+              className="animate-spin h-5 w-5 text-white"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              ></circle>
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+              ></path>
+            </svg>
+            이동 중...
+          </span>
+        ) : (
+          "타자 시작하기"
+        )}
       </button>
     </div>
   );
