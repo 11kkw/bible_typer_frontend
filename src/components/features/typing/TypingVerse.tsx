@@ -23,18 +23,14 @@ export function TypingVerse({
   onActivate,
 }: TypingVerseProps) {
   const inputRef = useRef<HTMLTextAreaElement>(null);
-
   const { userTyped, setUserTyped, compared } = useTypingVerse({
     verse,
     isActive,
   });
 
   useEffect(() => {
-    if (isActive) {
-      inputRef.current?.focus();
-    } else {
-      inputRef.current?.blur(); // 포커스 제거도 함께 관리
-    }
+    if (isActive) inputRef.current?.focus();
+    else inputRef.current?.blur();
   }, [isActive]);
 
   return (
@@ -45,12 +41,10 @@ export function TypingVerse({
       )}
       onClick={onActivate}
     >
-      {/* ✅ 배경 원문 */}
       <div className="opacity-40 text-gray-400 absolute top-0 left-0 pointer-events-none whitespace-pre-wrap">
         {verse.text}
       </div>
 
-      {/* ✅ 타이핑된 텍스트 */}
       <TypingText compared={compared} />
 
       <TypingInput
@@ -59,6 +53,11 @@ export function TypingVerse({
         onChange={setUserTyped}
         onNext={onNext}
         onPrev={onPrev}
+        // ⬇️ 추가
+        targetLength={verse.text.length}
+        autoNextOnComplete={true}
+        autoNextOnOverflow={true}
+        // disabled={!isActive} // 필요하면 활성 절만 입력 허용
       />
     </div>
   );
