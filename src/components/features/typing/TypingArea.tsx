@@ -1,7 +1,7 @@
 "use client";
 
 import { Verse } from "@/types/models/bible";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { TypingVerse } from "./TypingVerse";
 
 interface TypingAreaProps {
@@ -13,7 +13,12 @@ export function TypingArea({ initialVerses }: TypingAreaProps) {
 
   const goNext = () =>
     setCurrentIndex((prev) => Math.min(prev + 1, initialVerses.length - 1));
+
   const goPrev = () => setCurrentIndex((prev) => Math.max(prev - 1, 0));
+
+  useEffect(() => {
+    setCurrentIndex(0);
+  }, [initialVerses]);
 
   return (
     <div className="max-w-4xl w-full text-left py-16 md:py-24 relative">

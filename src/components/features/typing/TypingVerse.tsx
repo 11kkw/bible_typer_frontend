@@ -1,6 +1,7 @@
+import { useTypingVerse } from "@/hooks/useTypingVerse";
 import { Verse } from "@/types/models/bible";
 import clsx from "clsx";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { TypingInput } from "./TypingInput";
 import { TypingText } from "./TypingText";
 
@@ -21,26 +22,20 @@ export function TypingVerse({
   isActive,
   onActivate,
 }: TypingVerseProps) {
-  const [typed, setTyped] = useState("");
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  useEffect(() => {
-    if (isActive) inputRef.current?.focus();
-  }, [isActive]);
+  const { userTyped, setUserTyped, compared } = useTypingVerse({
+    verse,
+    isActive,
+  });
 
   useEffect(() => {
-    if (!isActive) return;
-
-    if (typed.length >= verse.text.length && verse.text.length > 0) {
-      onNext?.();
-    } else if (typed.length === 0) {
-      const handleBackspace = (e: KeyboardEvent) => {
-        if (e.key === "Backspace") onPrev?.();
-      };
-      window.addEventListener("keydown", handleBackspace);
-      return () => window.removeEventListener("keydown", handleBackspace);
+    if (isActive) {
+      inputRef.current?.focus();
+    } else {
+      inputRef.current?.blur(); // 포커스 제거도 함께 관리
     }
-  }, [typed, verse.text.length, onNext, onPrev, isActive]);
+  }, [isActive]);
 
   return (
     <div
@@ -50,12 +45,21 @@ export function TypingVerse({
       )}
       onClick={onActivate}
     >
+      {/* ✅ 배경 원문 */}
       <div className="opacity-40 text-gray-400 absolute top-0 left-0 pointer-events-none whitespace-pre-wrap">
         {verse.text}
       </div>
 
-      <TypingText text={verse.text} typed={typed} />
-      <TypingInput ref={inputRef} value={typed} onChange={setTyped} />
+      {/* ✅ 타이핑된 텍스트 */}
+      <TypingText compared={compared} />
+
+      <TypingInput
+        ref={inputRef}
+        value={userTyped}
+        onChange={setUserTyped}
+        onNext={onNext}
+        onPrev={onPrev}
+      />
     </div>
   );
 }
