@@ -1,6 +1,6 @@
 "use client";
 
-import { fetchBibleVersionDetail } from "@/api/bible";
+import { fetchBibleVersionDetail } from "@/features/typing/services/bible.service";
 import { BibleVersionDetail } from "@/types/api/bible";
 import { useQuery } from "@tanstack/react-query";
 

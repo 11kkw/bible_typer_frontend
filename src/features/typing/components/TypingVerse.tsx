@@ -1,4 +1,4 @@
-import { useTypingVerse } from "@/hooks/useTypingVerse";
+import { useTypingVerse } from "@/features/typing/hooks/useTypingVerse";
 import { Verse } from "@/types/models/bible";
 import clsx from "clsx";
 import { useEffect, useRef } from "react";

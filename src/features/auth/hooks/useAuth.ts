@@ -1,7 +1,7 @@
-import { loginApi, registerApi } from "@/api/auth";
-import { useAuthStore } from "@/lib/store/authStore";
+import { useAuthStore } from "@/features/auth/stores/authStore";
 import { LoginRequest, RegisterRequest } from "@/types/api/auth";
 import { useMutation } from "@tanstack/react-query";
+import { loginApi, registerApi } from "../services/auth.service";
 
 export function useLogin() {
   const setAccess = useAuthStore((s) => s.setAccess);

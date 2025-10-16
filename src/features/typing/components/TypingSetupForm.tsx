@@ -1,7 +1,7 @@
 "use client";
 
-import { useBibleVersionDetail } from "@/hooks/useBibleVersions";
-import { useVerseSelectStore } from "@/lib/store/useVerseSelectStore";
+import { useBibleVersionDetail } from "@/features/typing/hooks/useBibleVersions";
+import { useVerseSelectStore } from "@/features/typing/stores/useVerseSelectStore";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -10,7 +10,7 @@ interface BibleVersion {
   name: string;
 }
 
-export default function VerseSelectForm({
+export default function TypingSetupForm({
   versions,
 }: {
   versions: BibleVersion[];

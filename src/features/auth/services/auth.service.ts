@@ -4,7 +4,7 @@ import {
   RegisterRequest,
   RegisterResponse,
 } from "@/types/api/auth";
-import { apiClient } from "../client";
+import { apiClient } from "../../core/http/client";
 
 export async function loginApi(data: LoginRequest): Promise<LoginResponse> {
   return apiClient("/auth/login/", {

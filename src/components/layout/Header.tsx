@@ -10,10 +10,7 @@ export function Header() {
 
   const navItems = [
     { href: "/", label: "홈" },
-    { href: "/practice", label: "타자 연습" },
-    { href: "/progress", label: "진행 상황" },
-    { href: "/community", label: "커뮤니티" },
-    { href: "/mypage", label: "마이페이지/기록" },
+    { href: "/setup", label: "말씀 선택" },
   ];
 
   const isActive = (href: string) =>

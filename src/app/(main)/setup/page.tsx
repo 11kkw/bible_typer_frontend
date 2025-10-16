@@ -1,6 +1,6 @@
-import { fetchBibleVersions } from "@/api/bible";
 import { ReadingSection } from "@/components/features/practice/ReadingSection";
-import VerseSelectSection from "@/components/features/practice/VerseSelectSection";
+import VerseSelectSection from "@/features/typing/components/TypingSetupSection";
+import { fetchBibleVersions } from "@/features/typing/services/bible.service";
 
 export default async function PracticePage() {
   const versions = await fetchBibleVersions();

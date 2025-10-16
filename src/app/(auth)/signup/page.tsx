@@ -1,6 +1,6 @@
 "use client";
 
-import { useRegister } from "@/hooks/useAuth"; // ✅ 추가
+import { useRegister } from "@/features/auth/hooks/useAuth"; // ✅ 추가
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
