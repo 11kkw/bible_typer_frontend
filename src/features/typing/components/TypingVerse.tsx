@@ -1,7 +1,7 @@
-import { useTypingVerse } from "@/features/typing/hooks/useTypingVerse";
 import { Verse } from "@/types/models/bible";
 import clsx from "clsx";
 import { useEffect, useRef } from "react";
+import { useTypingVerse } from "../hooks/useTypingVerse";
 import { TypingInput } from "./TypingInput";
 import { TypingText } from "./TypingText";
 
@@ -23,10 +23,7 @@ export function TypingVerse({
   onActivate,
 }: TypingVerseProps) {
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const { userTyped, setUserTyped, compared } = useTypingVerse({
-    verse,
-    isActive,
-  });
+  const { userTyped, setUserTyped, compared } = useTypingVerse(verse);
 
   useEffect(() => {
     if (isActive) inputRef.current?.focus();

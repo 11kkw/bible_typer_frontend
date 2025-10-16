@@ -1,6 +1,6 @@
 // app/typing/page.tsx
 import { TypingArea } from "@/features/typing/components/TypingArea";
-import { fetchRandomVerses } from "@/features/typing/services/bible.service";
+import { fetchRandomVerses } from "@/features/typing/services/verse.service";
 
 export default async function Page() {
   const verses = await fetchRandomVerses(4);
