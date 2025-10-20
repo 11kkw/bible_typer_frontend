@@ -1,7 +1,7 @@
 import { Verse } from "@/types/models/bible";
 import clsx from "clsx";
 import { useEffect, useRef } from "react";
-import { useTypingVerse } from "../hooks/useTypingVerse";
+import { useVerseCompare } from "../hooks/useVerseCompare";
 import { TypingInput } from "./TypingInput";
 import { TypingText } from "./TypingText";
 
@@ -23,7 +23,7 @@ export function TypingVerse({
   onActivate,
 }: TypingVerseProps) {
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const { userTyped, setUserTyped, compared } = useTypingVerse(verse);
+  const { compared } = useVerseCompare(verse);
 
   useEffect(() => {
     if (isActive) inputRef.current?.focus();
@@ -45,14 +45,10 @@ export function TypingVerse({
       <TypingText compared={compared} />
 
       <TypingInput
+        verseId={verse.id}
         ref={inputRef}
-        value={userTyped}
-        onChange={setUserTyped}
         onNext={onNext}
         onPrev={onPrev}
-        targetLength={verse.text.length}
-        autoNextOnComplete={true}
-        autoNextOnOverflow={true}
       />
     </div>
   );

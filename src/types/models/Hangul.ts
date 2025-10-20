@@ -6,4 +6,6 @@ export interface HangulChar {
   jong?: string;
   parts: string[];
   type: "hangul" | "symbol" | "space" | "latin";
+  isCompoundJung?: boolean;
+  isCompoundJong?: boolean;
 }

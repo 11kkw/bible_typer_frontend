@@ -16,7 +16,7 @@ export default function TypingSetupForm({
   versions: BibleVersion[];
 }) {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false); // ✅ 로딩 상태
+  const [isLoading, setIsLoading] = useState(false);
 
   const {
     selectedVersionId,

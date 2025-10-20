@@ -7,7 +7,6 @@ export interface VerseSelectState {
   currentChapter: number;
   chapterEnd: number;
 
-  // actions
   setVersion: (id: number | null) => void;
   setBook: (id: number | null) => void;
   setChapterStart: (start: number) => void;
