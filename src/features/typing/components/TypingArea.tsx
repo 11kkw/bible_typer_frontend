@@ -7,8 +7,15 @@ import { TypingVerse } from "./TypingVerse";
 
 export function TypingArea({ initialVerses }: { initialVerses: Verse[] }) {
   const { verses, isLoading } = useVerseLoader(initialVerses);
+
   const { currentVerseIndex, goNext, goPrev, activate } =
     useTypingSession(verses);
+
+  // const { cpm } = useTypingStats({
+  //   active: true,
+  //   intervalMs: 500,
+  //   debug: true,
+  // });
 
   if (isLoading) {
     return (
@@ -20,6 +27,9 @@ export function TypingArea({ initialVerses }: { initialVerses: Verse[] }) {
 
   return (
     <div className="max-w-4xl w-full text-left py-16 md:py-24 relative">
+      {/* <div>
+        <p>현재 속도: {cpm} CPM</p>
+      </div> */}
       {verses.map((verse, index) => (
         <TypingVerse
           key={verse.id}
