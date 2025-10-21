@@ -22,8 +22,3 @@ export interface Verse {
   bcv: string;
   text: string;
 }
-
-export interface ComparedChar {
-  char: string;
-  status: "pending" | "correct" | "incorrect" | "current";
-}

@@ -1,6 +1,7 @@
 // features/typing/stores/useTypingStore.ts
 import { HangulChar } from "@/types/models/Hangul";
 import { create } from "zustand";
+import { TypedChar } from "../types";
 
 /**
  * 📦 Typing 상태 관리 Store (순수 저장소 전용)
@@ -9,14 +10,14 @@ import { create } from "zustand";
  */
 interface TypingState {
   /** 유저 입력 문자열 (verse.id → text) */
-  userTypedMap: Record<number, string>;
+  userTypedMap: Record<number, TypedChar[]>;
 
   userDecomposedMap: Record<number, HangulChar[]>;
 
   origDecomposedMap: Record<number, HangulChar[]>;
 
   /** ✅ 유저 입력 문자열 저장 */
-  setUserTyped: (id: number, value: string) => void;
+  setUserTyped: (id: number, chars: TypedChar[]) => void;
 
   /** ✅ 유저 입력 분해 결과 저장 */
   setUserDecomposed: (id: number, decomposed: HangulChar[]) => void;
@@ -34,9 +35,9 @@ export const useTypingStore = create<TypingState>((set) => ({
   origDecomposedMap: {},
 
   // ✅ 순수 setter들
-  setUserTyped: (id, value) =>
+  setUserTyped: (id, chars) =>
     set((state) => ({
-      userTypedMap: { ...state.userTypedMap, [id]: value },
+      userTypedMap: { ...state.userTypedMap, [id]: chars },
     })),
 
   setUserDecomposed: (id, decomposed) =>

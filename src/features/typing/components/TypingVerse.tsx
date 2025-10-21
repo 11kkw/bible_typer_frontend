@@ -1,7 +1,8 @@
+import { decomposeHangulString } from "@/core/utils/disassemble";
 import { Verse } from "@/types/models/bible";
 import clsx from "clsx";
-import { useEffect, useRef } from "react";
-import { useVerseCompare } from "../hooks/useVerseCompare";
+import { useEffect, useRef } from "react"; // ✅ useRef 추가!
+import { useTypingStore } from "../stores/useTypingStore";
 import { TypingInput } from "./TypingInput";
 import { TypingText } from "./TypingText";
 
@@ -22,8 +23,15 @@ export function TypingVerse({
   isActive,
   onActivate,
 }: TypingVerseProps) {
-  const inputRef = useRef<HTMLTextAreaElement>(null);
-  const { compared } = useVerseCompare(verse);
+  const inputRef = useRef<HTMLTextAreaElement>(null); // ✅ useRef 정상 작동
+  const { setOrigDecomposed, origDecomposedMap } = useTypingStore();
+
+  useEffect(() => {
+    if (!origDecomposedMap[verse.id]) {
+      const decomposed = decomposeHangulString(verse.text);
+      setOrigDecomposed(verse.id, decomposed);
+    }
+  }, [verse.id, verse.text, origDecomposedMap, setOrigDecomposed]);
 
   useEffect(() => {
     if (isActive) inputRef.current?.focus();
@@ -38,12 +46,17 @@ export function TypingVerse({
       )}
       onClick={onActivate}
     >
-      <div className="opacity-40 text-gray-400 absolute top-0 left-0 pointer-events-none whitespace-pre-wrap">
+      {/* 회색 원문 */}
+      <div className="opacity-40 text-gray-400 pointer-events-none whitespace-pre-wrap">
         {verse.text}
       </div>
 
-      <TypingText compared={compared} />
+      {/* 유저 입력 */}
+      <div className="absolute top-0 left-0 z-20">
+        <TypingText verseId={verse.id} />
+      </div>
 
+      {/* 투명 입력창 */}
       <TypingInput
         verseId={verse.id}
         ref={inputRef}

@@ -3,6 +3,7 @@
 import { decomposeHangulString } from "@/core/utils/disassemble";
 import { forwardRef, useCallback } from "react";
 import { useTypingStore } from "../stores/useTypingStore";
+import { compareVerseParts } from "../utils/compareVerseParts";
 
 interface TypingInputProps {
   verseId: number;
@@ -10,79 +11,67 @@ interface TypingInputProps {
   onPrev?: () => void;
 }
 
+/**
+ * ✅ TypingInput (간소화 버전)
+ * - 사용자가 입력한 텍스트를 감지하고 비교 결과를 store에 반영
+ * - IME 조합 상태 추적 제거 (조합 중 여부는 무시)
+ */
 export const TypingInput = forwardRef<HTMLTextAreaElement, TypingInputProps>(
   ({ verseId, onNext, onPrev }, ref) => {
-    const value = useTypingStore((s) => s.userTypedMap[verseId] ?? "");
+    // ✅ setter만 정적으로 가져옴 (불변)
+    const { setUserTyped } = useTypingStore.getState();
 
-    const totalLen = useTypingStore((s) => {
-      const orig = s.origDecomposedMap[verseId];
-      if (!orig) return 0;
-      return orig.reduce((sum, ch) => sum + ch.parts.length, 0);
-    });
-    const { setUserTyped, setUserDecomposed } = useTypingStore.getState();
+    // ✅ orig은 store에서 구독 (값이 바뀌면 렌더링 갱신됨)
+    const orig = useTypingStore((s) => s.origDecomposedMap[verseId]);
+    const totalLen = orig?.reduce((sum, c) => sum + c.parts.length, 0) ?? 0;
 
+    /** ✅ 입력 변경 처리 */
     const handleChange = useCallback(
       (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-        const nextVal = e.target.value;
-        const decomposed = decomposeHangulString(nextVal);
+        if (!orig) return;
 
-        setUserTyped(verseId, nextVal);
-        setUserDecomposed(verseId, decomposed);
+        const val = e.target.value;
+        const userDecomposed = decomposeHangulString(val);
+        const compared = compareVerseParts(orig, userDecomposed);
+        setUserTyped(verseId, compared);
 
-        const typedLen = decomposed.reduce(
-          (sum, ch) => sum + ch.parts.length,
+        const typedLen = userDecomposed.reduce(
+          (sum, c) => sum + c.parts.length,
           0
         );
+        const last = compared.at(-1);
 
-        // ✅ 디버그 로그
-        console.log(
-          `%c[TypingInput:%d]%c 입력됨 | value="%s" | typed=%d / total=%d`,
-          "color:#22c55e;font-weight:bold;",
-          verseId,
-          "color:gray;",
-          nextVal,
-          typedLen,
-          totalLen
-        );
-
-        // ✅ 입력 완료 시
-        if (totalLen > 0 && typedLen >= totalLen) {
-          console.log(
-            `%c[TypingInput:%d]%c ✅ 자동 다음 절 이동 (typed=%d / total=%d)`,
-            "color:#22c55e;font-weight:bold;",
-            verseId,
-            "color:gray;",
-            typedLen,
-            totalLen
-          );
+        if (
+          typedLen >= totalLen &&
+          last &&
+          (last.status === "correct" || last.status === "incorrect")
+        ) {
           onNext?.();
         }
       },
-      [verseId, totalLen, onNext]
+      [verseId, onNext, orig, totalLen, setUserTyped]
     );
 
-    const handleKeyDown = useCallback(
-      (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-        if (e.key === "Enter") {
-          e.preventDefault();
-          onNext?.();
-        } else if (e.key === "Backspace" && value.length === 0) {
-          e.preventDefault();
-          onPrev?.();
-        }
-      },
-      [value, onNext, onPrev]
-    );
+    /** ✅ 특수 키 처리 (Enter, Backspace 등) */
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      const value = (e.target as HTMLTextAreaElement).value;
 
-    /** 🪶 렌더 */
+      if (e.key === "Enter") {
+        e.preventDefault();
+        onNext?.();
+      } else if (e.key === "Backspace" && value.length === 0) {
+        e.preventDefault();
+        onPrev?.();
+      }
+    };
+
     return (
       <textarea
         ref={ref}
-        value={value}
         onChange={handleChange}
         onKeyDown={handleKeyDown}
         spellCheck={false}
-        className="absolute inset-0 w-full h-full text-transparent caret-[#68D391] bg-transparent border-none resize-none"
+        className="absolute inset-0 w-full h-full text-transparent caret-[#68D391] bg-transparent border-none resize-none outline-none"
       />
     );
   }
