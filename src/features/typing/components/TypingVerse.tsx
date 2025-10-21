@@ -52,7 +52,7 @@ export function TypingVerse({
       </div>
 
       {/* 유저 입력 */}
-      <div className="absolute top-0 left-0 z-20">
+      <div className="absolute top-0 left-0 pointer-events-none">
         <TypingText verseId={verse.id} />
       </div>
 

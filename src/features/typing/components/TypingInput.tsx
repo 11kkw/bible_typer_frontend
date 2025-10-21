@@ -113,7 +113,9 @@ export const TypingInput = forwardRef<HTMLTextAreaElement, TypingInputProps>(
         onKeyDown={handleKeyDown}
         onKeyUp={handleKeyUp}
         spellCheck={false}
-        className="absolute inset-0 w-full h-full text-transparent caret-[#68D391] bg-transparent border-none resize-none outline-none"
+        className="absolute inset-0 w-full h-full text-transparent caret-[#68D391]
+             bg-transparent border-none resize-none outline-none
+             [user-select:text!important]"
       />
     );
   }

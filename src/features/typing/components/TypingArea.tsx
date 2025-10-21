@@ -2,6 +2,7 @@
 
 import { Verse } from "@/types/models/bible";
 import { useTypingSession } from "../hooks/useTypingSession";
+import { useTypingStats } from "../hooks/useTypingStats";
 import { useVerseLoader } from "../hooks/useVerseLoader";
 import { TypingVerse } from "./TypingVerse";
 
@@ -11,11 +12,10 @@ export function TypingArea({ initialVerses }: { initialVerses: Verse[] }) {
   const { currentVerseIndex, goNext, goPrev, activate } =
     useTypingSession(verses);
 
-  // const { cpm } = useTypingStats({
-  //   active: true,
-  //   intervalMs: 500,
-  //   debug: true,
-  // });
+  const { cpm, accuracy, errorCount } = useTypingStats({
+    active: true,
+    intervalMs: 300,
+  });
 
   if (isLoading) {
     return (
@@ -27,9 +27,11 @@ export function TypingArea({ initialVerses }: { initialVerses: Verse[] }) {
 
   return (
     <div className="max-w-4xl w-full text-left py-16 md:py-24 relative">
-      {/* <div>
-        <p>현재 속도: {cpm} CPM</p>
-      </div> */}
+      <div className="flex gap-4 text-lg">
+        <span>⚡ 속도: {cpm} CPM</span>
+        <span>🎯 정확도: {accuracy}%</span>
+        <span>❌ 오타: {errorCount}</span>
+      </div>
       {verses.map((verse, index) => (
         <TypingVerse
           key={verse.id}
