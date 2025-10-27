@@ -16,16 +16,12 @@ interface TypingState {
 
   origDecomposedMap: Record<number, HangulChar[]>;
 
-  /** ✅ 유저 입력 문자열 저장 */
   setUserTyped: (id: number, chars: TypedChar[]) => void;
 
-  /** ✅ 유저 입력 분해 결과 저장 */
   setUserDecomposed: (id: number, decomposed: HangulChar[]) => void;
 
-  /** ✅ 원문(성경절) 분해 결과 저장 */
   setOrigDecomposed: (id: number, decomposed: HangulChar[]) => void;
 
-  /** ✅ 전체 초기화 */
   resetAll: () => void;
 }
 

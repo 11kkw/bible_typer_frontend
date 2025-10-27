@@ -1,4 +1,5 @@
 import { Toaster } from "@/components/ui/sonner";
+import { AuthProvider } from "@/providers/AuthProvider";
 import ReactQueryProvider from "@/providers/ReactQueryProvider";
 import type { Metadata } from "next";
 import { Inter, Noto_Sans_KR } from "next/font/google";
@@ -33,6 +34,7 @@ export const metadata: Metadata = {
   description: "성경 구절 타자 연습 서비스",
 };
 
+/* === Root Layout === */
 export default function RootLayout({
   children,
 }: {
@@ -43,12 +45,14 @@ export default function RootLayout({
       lang="ko"
       className={`${inter.variable} ${noto.variable} ${materialSymbols.variable}`}
     >
-      <ReactQueryProvider>
-        <body className="bg-background text-foreground font-sans antialiased">
-          {children}
-          <Toaster richColors closeButton />
-        </body>
-      </ReactQueryProvider>
+      <body className="bg-background text-foreground font-sans antialiased">
+        <ReactQueryProvider>
+          <AuthProvider>
+            {children}
+            <Toaster richColors closeButton />
+          </AuthProvider>
+        </ReactQueryProvider>
+      </body>
     </html>
   );
 }

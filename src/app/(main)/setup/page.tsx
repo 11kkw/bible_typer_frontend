@@ -1,6 +1,6 @@
-import { ReadingSection } from "@/components/features/practice/ReadingSection";
 import VerseSelectSection from "@/features/typing/components/TypingSetupSection";
 import { fetchBibleVersions } from "@/features/typing/services/bible.service";
+import { ReadingSection } from "@/features/user/components/ReadingSection";
 
 export default async function PracticePage() {
   const versions = await fetchBibleVersions();

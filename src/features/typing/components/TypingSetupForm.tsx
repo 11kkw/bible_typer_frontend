@@ -64,13 +64,12 @@ export default function TypingSetupForm({
 
   const handleStartTyping = async () => {
     if (!selectedBookId || !selectedVersionId) return;
-    setIsLoading(true); // ✅ 로딩 시작
+    setIsLoading(true);
     router.push("/");
   };
 
   return (
     <div className="card space-y-5">
-      {/* ✅ 성경 버전 선택 */}
       <div>
         <label
           htmlFor="bible-version-select"

@@ -9,12 +9,21 @@
     "*.tsx": "typescriptreact"
   },
 
-  // 💡 ESLint 자동 수정 활성화
+  // ✅ ESLint 자동 수정 및 import 정리
   "editor.codeActionsOnSave": {
+    "source.fixAll": "explicit",
     "source.fixAll.eslint": "explicit",
     "source.organizeImports": "explicit"
   },
 
-  // ⚙️ ESLint가 포맷터로 충돌하지 않도록 설정
-  "eslint.format.enable": false
+  // ⚙️ ESLint가 포맷터로 작동하지 않도록 (Prettier 전담)
+  "eslint.format.enable": false,
+
+  // ✅ ESLint 플러그인 활성화
+  "eslint.validate": [
+    "javascript",
+    "javascriptreact",
+    "typescript",
+    "typescriptreact"
+  ]
 }

@@ -47,7 +47,7 @@ export function TypingVerse({
       onClick={onActivate}
     >
       {/* 회색 원문 */}
-      <div className="opacity-40 text-gray-400 pointer-events-none whitespace-pre-wrap">
+      <div className="opacity-40 text-gray-400 pointer-events-none whitespace-pre-wrap break-all">
         {verse.text}
       </div>
 

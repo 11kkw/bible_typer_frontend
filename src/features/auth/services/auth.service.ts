@@ -1,10 +1,10 @@
+import { apiClient } from "@/core/http/apiClient";
 import {
   LoginRequest,
   LoginResponse,
   RegisterRequest,
   RegisterResponse,
 } from "@/types/api/auth";
-import { apiClient } from "../../core/http/client";
 
 export async function loginApi(data: LoginRequest): Promise<LoginResponse> {
   return apiClient("/auth/login/", {

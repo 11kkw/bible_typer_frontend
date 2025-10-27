@@ -1,6 +1,6 @@
 // src/app/(main)/layout.tsx
 import { Footer } from "@/components/layout/Footer";
-import { Header } from "@/components/layout/Header";
+import { Header } from "@/components/layout/Header/Header";
 import "../globals.css";
 
 export default function MainLayout({

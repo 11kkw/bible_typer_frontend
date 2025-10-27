@@ -8,6 +8,10 @@ import {
   fetchVersesByBookAndChapter,
 } from "../services/verse.service";
 
+function cleanVerseText(text: string): string {
+  return text.replace(/[^\p{L}\p{N}\s]/gu, "");
+}
+
 export function useVerseLoader(initialVerses: Verse[]) {
   const selectedBookId = useVerseSelectStore((s) => s.selectedBookId);
   const chapterStart = useVerseSelectStore((s) => s.chapterStart);
@@ -17,14 +21,23 @@ export function useVerseLoader(initialVerses: Verse[]) {
   const { data = initialVerses, isLoading } = useQuery({
     queryKey: ["verses", selectedBookId, currentChapter],
     queryFn: async () => {
+      let verses: Verse[];
+
       if (selectedBookId && currentChapter != null) {
         const res = await fetchVersesByBookAndChapter(
           selectedBookId,
           currentChapter
         );
-        return res.results;
+        verses = res.results;
+      } else {
+        verses = await fetchRandomVerses(4);
       }
-      return await fetchRandomVerses(4);
+
+      // ✅ 특수문자 제거 처리
+      return verses.map((v) => ({
+        ...v,
+        text: cleanVerseText(v.text),
+      }));
     },
     enabled:
       !!selectedBookId && !!chapterStart && !!chapterEnd && !!currentChapter,
@@ -32,7 +45,10 @@ export function useVerseLoader(initialVerses: Verse[]) {
     initialData:
       selectedBookId && chapterStart && currentChapter
         ? undefined
-        : initialVerses,
+        : initialVerses.map((v) => ({
+            ...v,
+            text: cleanVerseText(v.text),
+          })),
   });
 
   return {

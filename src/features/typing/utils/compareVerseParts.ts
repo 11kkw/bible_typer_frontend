@@ -12,7 +12,6 @@ const safeJongParts = (jong?: string): string[] =>
 const safeJungParts = (jung?: string): string[] =>
   getJungComponents(jung ?? "") ?? [];
 
-/** ✅ 이전 current 상태를 정리 (마지막 글자만 유지) */
 function stabilizeStatuses(rows: TypedChar[], userLen: number): TypedChar[] {
   const last = userLen - 1;
   for (let i = 0; i < rows.length; i++) {
@@ -23,7 +22,6 @@ function stabilizeStatuses(rows: TypedChar[], userLen: number): TypedChar[] {
   return rows;
 }
 
-/** ✅ 원문과 입력을 전체 비교해서 TypedChar[] 반환 */
 export function compareVerseParts(
   origDecomposed: HangulChar[],
   userDecomposed: HangulChar[]
@@ -35,7 +33,8 @@ export function compareVerseParts(
     const userPart = userDecomposed[i];
     const isCurrent = i === userDecomposed.length - 1;
 
-    // 입력 없음
+    // ✅ AUTO_CORRECT_CHARS 관련 로직 제거됨
+
     if (!userPart) {
       rows.push({ char: orig.char, status: "pending" });
       continue;
@@ -53,7 +52,7 @@ export function compareVerseParts(
     const isFullyComposed =
       !!userPart.cho && !!userPart.jung && (orig.jong ? !!userPart.jong : true);
 
-    // 1️⃣ 초성 다름
+    // 1️⃣ 초성 불일치
     if (userPart.cho !== orig.cho) {
       const isNextChoShift =
         isCurrent &&
@@ -117,7 +116,7 @@ export function compareVerseParts(
       continue;
     }
 
-    // 5️⃣ 완성형 일치 여부 (전체 기준)
+    // 5️⃣ 완성형 일치 여부
     if (composed === orig.char) {
       rows.push({
         char: composed,
