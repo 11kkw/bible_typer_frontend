@@ -4,6 +4,7 @@ import { useBibleVersionDetail } from "@/features/typing/hooks/useBibleVersions"
 import { useVerseSelectStore } from "@/features/typing/stores/useVerseSelectStore";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { fetchBookStats } from "../services/book.service";
 
 interface BibleVersion {
   id: number;
@@ -27,16 +28,21 @@ export default function TypingSetupForm({
     setBook,
     setChapterStart,
     setChapterEnd,
+    setBookStats, // ✅ Zustand setter 추가
   } = useVerseSelectStore();
 
+  // ✅ 선택된 버전 상세 정보 가져오기
   const { data: versionDetail } = useBibleVersionDetail(
     selectedVersionId ?? undefined
   );
+
+  // ✅ 선택된 책 정보
   const selectedBook = versionDetail?.books.find(
     (b) => b.id === selectedBookId
   );
   const totalChapters = selectedBook?.total_chapters ?? 1;
 
+  // ✅ 공통 스타일
   const commonSelectClass =
     "appearance-none w-full bg-white border border-border rounded-lg py-3 px-4 pr-10 " +
     "text-sm text-foreground transition duration-150 ease-in-out " +
@@ -64,12 +70,32 @@ export default function TypingSetupForm({
 
   const handleStartTyping = async () => {
     if (!selectedBookId || !selectedVersionId) return;
+
     setIsLoading(true);
-    router.push("/");
+    try {
+      const data = await fetchBookStats(
+        selectedBookId,
+        chapterStart,
+        chapterEnd
+      );
+
+      setBookStats({
+        totalVerseCount: data.total_verse_count,
+        totalCharacterCount: data.total_character_count,
+      });
+
+      router.push("/");
+    } catch (error) {
+      console.error("책 통계 불러오기 실패:", error);
+      alert("책 통계 불러오기 중 오류가 발생했습니다.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className="card space-y-5">
+      {/* ✅ 성경 버전 선택 */}
       <div>
         <label
           htmlFor="bible-version-select"
@@ -119,7 +145,7 @@ export default function TypingSetupForm({
         </div>
       </div>
 
-      {/* ✅ 시작 장 / 끝 장 */}
+      {/* ✅ 시작 장 / 끝 장 선택 */}
       <div className="grid grid-cols-2 gap-4">
         {/* 시작 장 */}
         <div>

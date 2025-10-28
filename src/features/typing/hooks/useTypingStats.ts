@@ -1,26 +1,25 @@
-"use client";
-
+import { useVerseSelectStore } from "@/features/typing/stores/useVerseSelectStore";
 import { useEffect, useRef, useState } from "react";
 import { useTypingStore } from "../stores/useTypingStore";
 
 /**
  * ✅ useTypingStats
- * - CPM, 정확도, 오타수, 시작시간, 경과시간 계산
- * - 정확도 즉시 반영
- * - 모든 입력 삭제 시 자동 초기화
+ * - CPM, 정확도, 오타수, 경과시간, 진행률(%) 계산
+ * - 진행률: 전체 글자 수 대비 입력 글자 수
  */
 export function useTypingStats(intervalMs = 500) {
   const userTypedMap = useTypingStore((s) => s.userTypedMap);
+  const totalCharacterCount = useVerseSelectStore((s) => s.totalCharacterCount);
 
   const [cpm, setCpm] = useState(0);
   const [accuracy, setAccuracy] = useState(100);
   const [errorCount, setErrorCount] = useState(0);
   const [elapsedMs, setElapsedMs] = useState(0);
   const [startTime, setStartTime] = useState<number | null>(null);
+  const [progress, setProgress] = useState(0);
 
   const startPerfRef = useRef<number | null>(null);
 
-  // ✅ 전체 입력 상태 집계
   const { totalTypedCount, totalCorrectCount, totalErrorCount } = Object.values(
     userTypedMap
   ).reduce(
@@ -37,7 +36,6 @@ export function useTypingStats(intervalMs = 500) {
     { totalTypedCount: 0, totalCorrectCount: 0, totalErrorCount: 0 }
   );
 
-  /** ✅ 최초 입력 시 시작시간 기록 */
   useEffect(() => {
     if (totalTypedCount > 0 && !startPerfRef.current) {
       const now = performance.now();
@@ -47,7 +45,6 @@ export function useTypingStats(intervalMs = 500) {
     }
   }, [totalTypedCount]);
 
-  /** ✅ 모든 입력이 지워지면 통계 리셋 */
   useEffect(() => {
     if (totalTypedCount === 0 && startPerfRef.current) {
       startPerfRef.current = null;
@@ -56,10 +53,10 @@ export function useTypingStats(intervalMs = 500) {
       setCpm(0);
       setAccuracy(100);
       setErrorCount(0);
+      setProgress(0);
     }
   }, [totalTypedCount]);
 
-  /** ✅ CPM 계산 */
   useEffect(() => {
     if (!startPerfRef.current) return;
 
@@ -74,7 +71,6 @@ export function useTypingStats(intervalMs = 500) {
     return () => clearInterval(timer);
   }, [intervalMs, totalTypedCount]);
 
-  /** ✅ 경과 시간 갱신 */
   useEffect(() => {
     if (!startTime) return;
 
@@ -85,13 +81,27 @@ export function useTypingStats(intervalMs = 500) {
     return () => clearInterval(timer);
   }, [startTime]);
 
-  /** ✅ 정확도 & 오타 즉시 반영 */
   useEffect(() => {
     const accVal =
       totalTypedCount > 0 ? (totalCorrectCount / totalTypedCount) * 100 : 100;
     setAccuracy(Math.round(accVal * 10) / 10);
     setErrorCount(totalErrorCount);
-  }, [totalTypedCount, totalCorrectCount, totalErrorCount]);
+    console.log(totalTypedCount + "totle typed");
+
+    if (totalCharacterCount > 0) {
+      let ratio = (totalTypedCount / totalCharacterCount) * 100;
+      ratio = Math.round(ratio * 10) / 10;
+      if (ratio >= 98) ratio = 100;
+      setProgress(ratio);
+    } else {
+      setProgress(0);
+    }
+  }, [
+    totalTypedCount,
+    totalCorrectCount,
+    totalErrorCount,
+    totalCharacterCount,
+  ]);
 
   const elapsedTime = formatTime(elapsedMs);
 
@@ -103,6 +113,7 @@ export function useTypingStats(intervalMs = 500) {
     elapsedMs,
     elapsedTime,
     startTime,
+    progress,
   };
 }
 

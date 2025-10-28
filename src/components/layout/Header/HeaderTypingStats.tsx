@@ -16,7 +16,7 @@ export function HeaderTypingStats({
   visible = false,
 }: HeaderTypingStatsProps) {
   if (!visible) return null;
-
+  console.log(progress);
   return (
     <div
       className={`
@@ -26,10 +26,13 @@ export function HeaderTypingStats({
     >
       <div className="container-wide">
         {/* 진행률 바 */}
-        <div className="w-full h-[8px] bg-gray-200 rounded-full overflow-hidden">
+        <div className="w-full h-[8px] bg-gray-200 rounded-full relative">
           <div
-            className="h-full bg-[var(--primary-color)]/85 rounded-full transition-all duration-500 ease-out"
-            style={{ width: `${progress}%` }}
+            className="absolute left-0 top-0 h-full bg-primary transition-all duration-500 ease-out"
+            style={{
+              width: `${Math.min(progress, 100)}%`,
+              borderRadius: progress >= 100 ? "inherit" : "9999px 0 0 9999px",
+            }}
           />
         </div>
 

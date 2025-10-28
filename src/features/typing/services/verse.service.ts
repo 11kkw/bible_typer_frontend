@@ -13,7 +13,7 @@ export async function fetchVersesByBookAndChapter(
 ): Promise<PaginatedResponse<Verse>> {
   const query = page ? `?page=${page}` : "";
   return apiClient(
-    `/scriptures/verses/books/${bookId}/chapters/${chapterNumber}/${query}`,
+    `/scriptures/books/${bookId}/chapters/${chapterNumber}/verses/${query}`,
     { method: "GET" }
   );
 }

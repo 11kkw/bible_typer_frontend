@@ -29,6 +29,13 @@ export function useVerseLoader(initialVerses: Verse[]) {
           currentChapter
         );
         verses = res.results;
+        // 임시 글자수 계산 (공백 포함)
+        const totalChars = verses.reduce(
+          (sum, v) => sum + (v.text?.length ?? 0),
+          0
+        );
+
+        console.log(`총 절 수: ${verses.length}, 총 글자 수: ${totalChars}`);
       } else {
         verses = await fetchRandomVerses(4);
       }
@@ -36,7 +43,7 @@ export function useVerseLoader(initialVerses: Verse[]) {
       // ✅ 특수문자 제거 처리
       return verses.map((v) => ({
         ...v,
-        text: cleanVerseText(v.text),
+        text: v.text,
       }));
     },
     enabled:
@@ -47,7 +54,7 @@ export function useVerseLoader(initialVerses: Verse[]) {
         ? undefined
         : initialVerses.map((v) => ({
             ...v,
-            text: cleanVerseText(v.text),
+            text: v.text,
           })),
   });
 

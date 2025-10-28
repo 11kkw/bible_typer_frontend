@@ -12,7 +12,7 @@ export function Header() {
     { href: "/setup", label: "말씀 선택" },
   ];
 
-  const { accuracy, totalTypedCount, elapsedTime } = useTypingStats();
+  const { accuracy, totalTypedCount, elapsedTime, progress } = useTypingStats();
 
   const hasInput = totalTypedCount > 0;
 
@@ -33,14 +33,13 @@ export function Header() {
               <HeaderNav navItems={navItems} />
             </div>
 
-            {/* 우측 그룹 */}
             <HeaderUserMenu />
           </div>
         </div>
 
         <HeaderTypingStats
           visible={hasInput}
-          progress={25}
+          progress={progress}
           elapsedTime={elapsedTime}
           accuracy={accuracy}
           currentRef="창세기 1:1-2"

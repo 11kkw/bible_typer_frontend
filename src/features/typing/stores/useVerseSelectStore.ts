@@ -6,9 +6,15 @@ export interface VerseSelectState {
   chapterStart: number;
   currentChapter: number;
   chapterEnd: number;
+  totalVerseCount: number;
+  totalCharacterCount: number;
 
   setVersion: (id: number | null) => void;
   setBook: (id: number | null) => void;
+  setBookStats: (data: {
+    totalVerseCount: number;
+    totalCharacterCount: number;
+  }) => void;
   setChapterStart: (start: number) => void;
   setChapterEnd: (end: number) => void;
   setCurrentChapter: (chapter: number) => void;
@@ -23,6 +29,8 @@ export const useVerseSelectStore = create<VerseSelectState>((set, get) => ({
   chapterStart: 1,
   currentChapter: 1,
   chapterEnd: 1,
+  totalVerseCount: 0,
+  totalCharacterCount: 0,
 
   setVersion: (id) =>
     set(() => ({
@@ -87,4 +95,10 @@ export const useVerseSelectStore = create<VerseSelectState>((set, get) => ({
       currentChapter: 1,
       chapterEnd: 1,
     })),
+
+  setBookStats: (data) =>
+    set({
+      totalVerseCount: data.totalVerseCount,
+      totalCharacterCount: data.totalCharacterCount,
+    }),
 }));
