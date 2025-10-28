@@ -8,10 +8,6 @@ import {
   fetchVersesByBookAndChapter,
 } from "../services/verse.service";
 
-function cleanVerseText(text: string): string {
-  return text.replace(/[^\p{L}\p{N}\s]/gu, "");
-}
-
 export function useVerseLoader(initialVerses: Verse[]) {
   const selectedBookId = useVerseSelectStore((s) => s.selectedBookId);
   const chapterStart = useVerseSelectStore((s) => s.chapterStart);
@@ -29,18 +25,10 @@ export function useVerseLoader(initialVerses: Verse[]) {
           currentChapter
         );
         verses = res.results;
-        // 임시 글자수 계산 (공백 포함)
-        const totalChars = verses.reduce(
-          (sum, v) => sum + (v.text?.length ?? 0),
-          0
-        );
-
-        console.log(`총 절 수: ${verses.length}, 총 글자 수: ${totalChars}`);
       } else {
         verses = await fetchRandomVerses(4);
       }
 
-      // ✅ 특수문자 제거 처리
       return verses.map((v) => ({
         ...v,
         text: v.text,

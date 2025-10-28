@@ -20,7 +20,7 @@ export function useTypingSession(verses: Verse[]) {
       const nextIndex = i + 1;
 
       if (nextIndex >= verses.length) {
-        setShouldGoNextChapter(true); // ✅ 렌더 이후에 호출
+        setShouldGoNextChapter(true);
         return 0;
       }
 
