@@ -25,6 +25,28 @@ export function TypingVerse({
 }: TypingVerseProps) {
   const inputRef = useRef<HTMLTextAreaElement>(null); // ✅ useRef 정상 작동
   const { setOrigDecomposed, origDecomposedMap } = useTypingStore();
+  const highlightSpaceIndices = useMemo(() => {
+    if (!verse.text) return new Set<number>();
+    const chars = Array.from(verse.text);
+    const spaces = new Set<number>();
+
+    for (let i = 0; i < chars.length - 1; i++) {
+      const curr = chars[i];
+      const next = chars[i + 1];
+      const nextNext = chars[i + 2];
+      const isSpace = curr === " ";
+      const nextIsLineBreak =
+        next === "\n" ||
+        next === "\r" ||
+        (next === "\r" && nextNext === "\n");
+
+      if (isSpace && nextIsLineBreak) {
+        spaces.add(i);
+      }
+    }
+
+    return spaces;
+  }, [verse.text]);
   const referenceLabel = useMemo(() => {
     const bookTitle = verse.book_title?.trim();
     const chapterNumber =
@@ -87,7 +109,10 @@ export function TypingVerse({
 
         {/* 유저 입력 */}
         <div className="absolute top-0 left-0 pointer-events-none">
-          <TypingText verseId={verse.id} />
+          <TypingText
+            verseId={verse.id}
+            highlightSpaceIndices={highlightSpaceIndices}
+          />
         </div>
 
         {/* 투명 입력창 */}

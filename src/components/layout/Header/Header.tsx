@@ -72,7 +72,7 @@ export function Header() {
         </div>
 
         <HeaderTypingStats
-          visible={hasInput || !!selectionLabel}
+          visible={hasInput}
           progress={progress}
           elapsedTime={elapsedTime}
           accuracy={accuracy}

@@ -144,6 +144,16 @@ export function useTypingStats(intervalMs = 500) {
     };
   }, [totalTypedCount, intervalMs]);
 
+  useEffect(() => {
+    if (progress < 100) return;
+
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
+    startPerfRef.current = null;
+  }, [progress]);
+
   const elapsedTime = formatTime(elapsedMs);
 
   // ------------------------------------------------------------------

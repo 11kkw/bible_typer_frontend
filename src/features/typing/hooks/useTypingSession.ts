@@ -1,5 +1,6 @@
 import { Verse } from "@/types/models/bible";
 import { useEffect, useRef, useState } from "react";
+import { shallow } from "zustand/shallow";
 import { useVerseSelectStore } from "../stores/useVerseSelectStore";
 
 interface UseTypingSessionOptions {
@@ -7,6 +8,7 @@ interface UseTypingSessionOptions {
   hasPrevPage?: boolean;
   loadNextPage?: () => Promise<void> | Promise<any>;
   loadPrevPage?: () => Promise<void> | Promise<any>;
+  onComplete?: () => void;
 }
 
 export function useTypingSession(
@@ -14,7 +16,16 @@ export function useTypingSession(
   options?: UseTypingSessionOptions
 ) {
   const [currentVerseIndex, setCurrentIndex] = useState(0);
-  const { nextChapter, prevChapter } = useVerseSelectStore();
+  const { nextChapter, prevChapter, currentChapter, chapterEnd } =
+    useVerseSelectStore(
+      (state) => ({
+        nextChapter: state.nextChapter,
+        prevChapter: state.prevChapter,
+        currentChapter: state.currentChapter,
+        chapterEnd: state.chapterEnd,
+      }),
+      shallow
+    );
   const firstVerseIdRef = useRef<number | null>(null);
 
   const {
@@ -22,6 +33,7 @@ export function useTypingSession(
     hasPrevPage = false,
     loadNextPage,
     loadPrevPage,
+    onComplete,
   } = options || {};
 
   // ------------------------------------------------------------------
@@ -68,11 +80,19 @@ export function useTypingSession(
         await loadNextPage();
         console.log("✅ 다음 페이지 로드 완료, 인덱스 0으로 초기화");
         setCurrentIndex(0);
-      } else {
+        return;
+      }
+
+      const isLastChapter = currentChapter >= chapterEnd;
+
+      if (!isLastChapter) {
         console.log("📚 다음 장으로 이동 (nextChapter 호출)");
         nextChapter();
         // 다음 챕터로 넘어갈 땐 새 데이터의 첫 절부터 시작
         setCurrentIndex(0);
+      } else {
+        console.log("🏁 모든 장/페이지 완료");
+        onComplete?.();
       }
       return;
     }
