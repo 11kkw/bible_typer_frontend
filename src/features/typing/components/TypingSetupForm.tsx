@@ -107,7 +107,16 @@ export default function TypingSetupForm({
           <select
             id="bible-version-select"
             value={selectedVersionId ?? ""}
-            onChange={(e) => setVersion(Number(e.target.value))}
+            onChange={(e) => {
+              const value = e.target.value;
+              if (!value) {
+                setVersion(null, { name: null });
+                return;
+              }
+              const id = Number(value);
+              const versionName = versions.find((v) => v.id === id)?.name ?? null;
+              setVersion(id, { name: versionName });
+            }}
             className={commonSelectClass}
           >
             <option value="">선택하세요</option>
@@ -130,7 +139,17 @@ export default function TypingSetupForm({
           <select
             id="book-select"
             value={selectedBookId ?? ""}
-            onChange={(e) => setBook(Number(e.target.value))}
+            onChange={(e) => {
+              const value = e.target.value;
+              if (!value) {
+                setBook(null, { title: null });
+                return;
+              }
+              const id = Number(value);
+              const title = versionDetail?.books
+                .find((book) => book.id === id)?.title.trim() ?? null;
+              setBook(id, { title });
+            }}
             disabled={!versionDetail}
             className={commonSelectClass}
           >

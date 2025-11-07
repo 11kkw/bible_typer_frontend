@@ -1,6 +1,10 @@
 "use client";
 
+import { useMemo } from "react";
+import { shallow } from "zustand/shallow";
+
 import { useTypingStats } from "@/features/typing/hooks/useTypingStats";
+import { useVerseSelectStore } from "@/features/typing/stores/useVerseSelectStore";
 import Link from "next/link";
 import { HeaderNav } from "./HeaderNav";
 import { HeaderTypingStats } from "./HeaderTypingStats";
@@ -13,6 +17,36 @@ export function Header() {
   ];
 
   const { accuracy, totalTypedCount, elapsedTime, progress } = useTypingStats();
+
+  const {
+    selectedVersionName,
+    selectedBookTitle,
+    chapterStart,
+    chapterEnd,
+  } = useVerseSelectStore(
+    (state) => ({
+      selectedVersionName: state.selectedVersionName,
+      selectedBookTitle: state.selectedBookTitle,
+      chapterStart: state.chapterStart,
+      chapterEnd: state.chapterEnd,
+    }),
+    shallow
+  );
+
+  const selectionLabel = useMemo(() => {
+    if (!selectedBookTitle) return "";
+    const versionPrefix = selectedVersionName ? `${selectedVersionName} · ` : "";
+    const rangeLabel =
+      chapterStart === chapterEnd
+        ? `${chapterStart}장`
+        : `${chapterStart}~${chapterEnd}장`;
+    return `${versionPrefix}${selectedBookTitle} ${rangeLabel}`;
+  }, [
+    selectedVersionName,
+    selectedBookTitle,
+    chapterStart,
+    chapterEnd,
+  ]);
 
   const hasInput = totalTypedCount > 0;
 
@@ -38,11 +72,11 @@ export function Header() {
         </div>
 
         <HeaderTypingStats
-          visible={hasInput}
+          visible={hasInput || !!selectionLabel}
           progress={progress}
           elapsedTime={elapsedTime}
           accuracy={accuracy}
-          currentRef="창세기 1:1-2"
+          currentRef={selectionLabel}
         />
       </div>
     </header>

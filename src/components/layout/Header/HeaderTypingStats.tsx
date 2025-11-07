@@ -15,8 +15,9 @@ export function HeaderTypingStats({
   accuracy = 100,
   visible = false,
 }: HeaderTypingStatsProps) {
+  const clampedProgress = Math.max(0, Math.min(progress, 100));
+  const isComplete = clampedProgress >= 99.9;
   if (!visible) return null;
-  console.log(progress);
   return (
     <div
       className={`
@@ -26,13 +27,14 @@ export function HeaderTypingStats({
     >
       <div className="container-wide">
         {/* 진행률 바 */}
-        <div className="w-full h-[8px] bg-gray-200 rounded-full relative">
+        <div className="w-full h-[8px] bg-gray-200 rounded-full relative overflow-hidden">
           <div
-            className="absolute left-0 top-0 h-full bg-primary transition-all duration-500 ease-out"
-            style={{
-              width: `${Math.min(progress, 100)}%`,
-              borderRadius: progress >= 100 ? "inherit" : "9999px 0 0 9999px",
-            }}
+            className="absolute inset-y-0 bg-primary transition-all duration-500 ease-out"
+            style={
+              isComplete
+                ? { left: 0, right: 0 }
+                : { left: 0, width: `${clampedProgress}%` }
+            }
           />
         </div>
 

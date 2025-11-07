@@ -6,22 +6,57 @@ import {
 import { HangulChar } from "@/types/models/Hangul";
 import { TypedChar } from "../types";
 
+/**
+ * 안전하게 종성 분해
+ */
 const safeJongParts = (jong?: string): string[] =>
   getJongComponents(jong ?? "") ?? [];
 
+/**
+ * 안전하게 중성 분해
+ */
 const safeJungParts = (jung?: string): string[] =>
   getJungComponents(jung ?? "") ?? [];
 
-function stabilizeStatuses(rows: TypedChar[], userLen: number): TypedChar[] {
+/**
+ * 이전 글자 상태 안정화
+ * - 이전 글자가 "current"면 실제로 맞았을 때만 "correct"로 확정
+ * - 틀렸다면 그대로 "incorrect" 유지
+ */
+function stabilizeStatuses(
+  rows: TypedChar[],
+  userLen: number,
+  origDecomposed: HangulChar[]
+): TypedChar[] {
   const last = userLen - 1;
+
   for (let i = 0; i < rows.length; i++) {
-    if (rows[i].status === "current" && i < last) {
-      rows[i] = { ...rows[i], status: "correct" };
+    const row = rows[i];
+    const orig = origDecomposed[i];
+
+    // 마지막 글자는 현재 입력 중이므로 유지
+    if (i === last) continue;
+
+    // 이전 글자가 current면, 원본과 실제 입력이 같은지 판별
+    if (row.status === "current") {
+      const isActuallyCorrect = row.char === orig?.char;
+      rows[i] = {
+        ...row,
+        status: isActuallyCorrect ? "correct" : "incorrect",
+      };
     }
   }
+
   return rows;
 }
 
+/**
+ * 원본 구절과 사용자가 입력한 구절을 비교하여 각 글자의 상태를 판별
+ * - correct : 정확히 일치
+ * - incorrect : 틀림
+ * - current : 현재 입력 중
+ * - pending : 아직 입력 안됨
+ */
 export function compareVerseParts(
   origDecomposed: HangulChar[],
   userDecomposed: HangulChar[]
@@ -33,13 +68,13 @@ export function compareVerseParts(
     const userPart = userDecomposed[i];
     const isCurrent = i === userDecomposed.length - 1;
 
-    // ✅ AUTO_CORRECT_CHARS 관련 로직 제거됨
-
+    // 아직 입력 안된 글자
     if (!userPart) {
       rows.push({ char: orig.char, status: "pending" });
       continue;
     }
 
+    // 입력 글자 조합
     const composed = composeHangul(
       userPart.parts[0] ?? "",
       userPart.parts[1] ?? "",
@@ -130,5 +165,5 @@ export function compareVerseParts(
     }
   }
 
-  return stabilizeStatuses(rows, userDecomposed.length);
+  return stabilizeStatuses(rows, userDecomposed.length, origDecomposed);
 }

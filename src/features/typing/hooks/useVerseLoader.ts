@@ -1,53 +1,32 @@
+// typing/hooks/useVerseLoader.ts
 "use client";
 
 import { useVerseSelectStore } from "@/features/typing/stores/useVerseSelectStore";
 import { Verse } from "@/types/models/bible";
-import { useQuery } from "@tanstack/react-query";
-import {
-  fetchRandomVerses,
-  fetchVersesByBookAndChapter,
-} from "../services/verse.service";
+import { useVerseQuery } from "./useVerseQuery";
 
-export function useVerseLoader(initialVerses: Verse[]) {
-  const selectedBookId = useVerseSelectStore((s) => s.selectedBookId);
-  const chapterStart = useVerseSelectStore((s) => s.chapterStart);
-  const chapterEnd = useVerseSelectStore((s) => s.chapterEnd);
-  const currentChapter = useVerseSelectStore((s) => s.currentChapter);
+export function useVerseLoader(initialVerses: Verse[], page: number = 1) {
+  const { selectedBookId, currentChapter, chapterStart, chapterEnd } =
+    useVerseSelectStore((s) => ({
+      selectedBookId: s.selectedBookId,
+      currentChapter: s.currentChapter,
+      chapterStart: s.chapterStart,
+      chapterEnd: s.chapterEnd,
+    }));
 
-  const { data = initialVerses, isLoading } = useQuery({
-    queryKey: ["verses", selectedBookId, currentChapter],
-    queryFn: async () => {
-      let verses: Verse[];
-
-      if (selectedBookId && currentChapter != null) {
-        const res = await fetchVersesByBookAndChapter(
-          selectedBookId,
-          currentChapter
-        );
-        verses = res.results;
-      } else {
-        verses = await fetchRandomVerses(4);
-      }
-
-      return verses.map((v) => ({
-        ...v,
-        text: v.text,
-      }));
-    },
-    enabled:
-      !!selectedBookId && !!chapterStart && !!chapterEnd && !!currentChapter,
-    staleTime: 1000 * 60, // 1분 동안 캐시 유지
-    initialData:
-      selectedBookId && chapterStart && currentChapter
-        ? undefined
-        : initialVerses.map((v) => ({
-            ...v,
-            text: v.text,
-          })),
+  const { verses, isLoading, error } = useVerseQuery({
+    bookId: selectedBookId ?? undefined,
+    chapter: currentChapter ?? undefined,
+    page,
+    initialData: initialVerses,
   });
 
+  const isActive =
+    !!selectedBookId && !!chapterStart && !!chapterEnd && !!currentChapter;
+
   return {
-    verses: data,
-    isLoading,
+    verses: isActive ? verses : initialVerses,
+    isLoading: isActive ? isLoading : false,
+    error,
   };
 }

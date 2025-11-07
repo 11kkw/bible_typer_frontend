@@ -17,8 +17,11 @@ export interface BibleBook {
 
 export interface Verse {
   id: number;
-  chapter: number;
-  number: number;
-  bcv: string;
+  chapter: number; // chapter PK (not the human-readable number)
+  number: number; // verse number within the chapter
   text: string;
+  bcv?: string; // e.g. "01001001" or "창세기 1:1"
+  chapter_number?: number; // human-readable chapter number
+  book_title?: string;
+  version_name?: string;
 }

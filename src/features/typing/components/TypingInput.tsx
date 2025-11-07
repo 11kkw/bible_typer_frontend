@@ -13,7 +13,7 @@ interface TypingInputProps {
 
 export const TypingInput = forwardRef<HTMLTextAreaElement, TypingInputProps>(
   ({ verseId, onNext, onPrev }, ref) => {
-    const { setUserTyped } = useTypingStore.getState();
+    const setUserTyped = useTypingStore((s) => s.setUserTyped);
     const orig = useTypingStore((s) => s.origDecomposedMap[verseId]);
     const totalLen = orig?.reduce((sum, c) => sum + c.parts.length, 0) ?? 0;
 
@@ -57,7 +57,8 @@ export const TypingInput = forwardRef<HTMLTextAreaElement, TypingInputProps>(
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
       const el = e.currentTarget;
-      const isComposing = (e.nativeEvent as any)?.isComposing === true;
+      const nativeEvent = e.nativeEvent as KeyboardEvent;
+      const isComposing = nativeEvent.isComposing === true;
 
       if (e.key === "Enter") {
         if (isComposing || e.repeat || enterLockRef.current) return;

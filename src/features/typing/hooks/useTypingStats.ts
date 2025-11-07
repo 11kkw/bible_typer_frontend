@@ -1,29 +1,44 @@
 import { useVerseSelectStore } from "@/features/typing/stores/useVerseSelectStore";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { shallow } from "zustand/shallow";
 import { useTypingStore } from "../stores/useTypingStore";
 
-/**
- * ✅ useTypingStats
- * - CPM, 정확도, 오타수, 경과시간, 진행률(%) 계산
- * - 진행률: 전체 글자 수 대비 입력 글자 수
- */
 export function useTypingStats(intervalMs = 500) {
   const userTypedMap = useTypingStore((s) => s.userTypedMap);
-  const totalCharacterCount = useVerseSelectStore((s) => s.totalCharacterCount);
+  const origDecomposedMap = useTypingStore((s) => s.origDecomposedMap);
+  const prevKeyRef = useRef<string>("");
 
-  const [cpm, setCpm] = useState(0);
-  const [accuracy, setAccuracy] = useState(100);
-  const [errorCount, setErrorCount] = useState(0);
-  const [elapsedMs, setElapsedMs] = useState(0);
-  const [startTime, setStartTime] = useState<number | null>(null);
-  const [progress, setProgress] = useState(0);
+  // ------------------------------------------------------------------
+  // 1. 상태 선택 (Zustand + shallow)
+  // ------------------------------------------------------------------
+  const {
+    selectedVersionId,
+    selectedBookId,
+    chapterStart,
+    chapterEnd,
+    totalCharacterCount,
+  } = useVerseSelectStore(
+    (s) => ({
+      selectedVersionId: s.selectedVersionId,
+      selectedBookId: s.selectedBookId,
+      chapterStart: s.chapterStart,
+      chapterEnd: s.chapterEnd,
+      totalCharacterCount: s.totalCharacterCount,
+    }),
+    shallow
+  );
 
-  const startPerfRef = useRef<number | null>(null);
+  // ------------------------------------------------------------------
+  // 2. 실시간 통계 계산 (useMemo)
+  // ------------------------------------------------------------------
+  const { totalTypedCount, totalCorrectCount, totalErrorCount } = useMemo(() => {
+    const init = {
+      totalTypedCount: 0,
+      totalCorrectCount: 0,
+      totalErrorCount: 0,
+    };
 
-  const { totalTypedCount, totalCorrectCount, totalErrorCount } = Object.values(
-    userTypedMap
-  ).reduce(
-    (acc, arr) => {
+    return Object.values(userTypedMap).reduce((acc, arr) => {
       if (!Array.isArray(arr)) return acc;
       for (const ch of arr) {
         if (ch.status === "pending") continue;
@@ -32,83 +47,112 @@ export function useTypingStats(intervalMs = 500) {
         if (ch.status === "incorrect") acc.totalErrorCount++;
       }
       return acc;
-    },
-    { totalTypedCount: 0, totalCorrectCount: 0, totalErrorCount: 0 }
-  );
+    }, init);
+  }, [userTypedMap]);
 
+  const totalOriginalCount = useMemo(() => {
+    return Object.values(origDecomposedMap).reduce((acc, arr) => {
+      if (!Array.isArray(arr)) return acc;
+      return acc + arr.length;
+    }, 0);
+  }, [origDecomposedMap]);
+
+  const accuracy = useMemo(() => {
+    return totalTypedCount > 0
+      ? Math.round((totalCorrectCount / totalTypedCount) * 1000) / 10
+      : 100;
+  }, [totalTypedCount, totalCorrectCount]);
+
+  const totalTargetCount = useMemo(() => {
+    return totalOriginalCount || totalCharacterCount;
+  }, [totalOriginalCount, totalCharacterCount]);
+
+  const progress = useMemo(() => {
+    if (totalTargetCount <= 0) return 0;
+
+    const ratio = totalTypedCount / totalTargetCount;
+    const rounded = Math.round(ratio * 100);
+    return Math.min(100, Math.max(0, rounded));
+  }, [totalTypedCount, totalTargetCount]);
+
+  // ------------------------------------------------------------------
+  // 3. 타이머 및 상태 관리
+  // ------------------------------------------------------------------
+  const [cpm, setCpm] = useState(0);
+  const [elapsedMs, setElapsedMs] = useState(0);
+  const [startTime, setStartTime] = useState<number | null>(null);
+
+  const rafRef = useRef<number | null>(null);
+  const startPerfRef = useRef<number | null>(null);
+  const lastCpmUpdateRef = useRef<number>(0);
+  // ------------------------------------------------------------------
+  // 4. 데이터 변경 시 초기화
+  // ------------------------------------------------------------------
+  useEffect(() => {
+    const currentKey = `${selectedVersionId}-${selectedBookId}-${chapterStart}-${chapterEnd}`;
+
+    if (prevKeyRef.current !== currentKey) {
+      prevKeyRef.current = currentKey;
+
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      startPerfRef.current = null;
+      lastCpmUpdateRef.current = 0;
+      setCpm(0);
+      setElapsedMs(0);
+      setStartTime(null);
+    }
+  }, [selectedVersionId, selectedBookId, chapterStart, chapterEnd]);
+
+  // ------------------------------------------------------------------
+  // 5. 첫 입력 시 타이머 시작
+  // ------------------------------------------------------------------
   useEffect(() => {
     if (totalTypedCount > 0 && !startPerfRef.current) {
       const now = performance.now();
       startPerfRef.current = now;
       setStartTime(Date.now());
-      setElapsedMs(0);
     }
   }, [totalTypedCount]);
 
-  useEffect(() => {
-    if (totalTypedCount === 0 && startPerfRef.current) {
-      startPerfRef.current = null;
-      setStartTime(null);
-      setElapsedMs(0);
-      setCpm(0);
-      setAccuracy(100);
-      setErrorCount(0);
-      setProgress(0);
-    }
-  }, [totalTypedCount]);
-
+  // ------------------------------------------------------------------
+  // 6. requestAnimationFrame 루프 (elapsed + CPM)
+  // ------------------------------------------------------------------
   useEffect(() => {
     if (!startPerfRef.current) return;
 
-    const timer = setInterval(() => {
-      const now = performance.now();
-      const elapsedSec = (now - startPerfRef.current!) / 1000;
-      const cpmVal =
-        elapsedSec > 0 ? Math.round((totalTypedCount / elapsedSec) * 60) : 0;
-      setCpm(cpmVal);
-    }, intervalMs);
+    const loop = () => {
+      const nowPerf = performance.now();
+      const elapsedSec = (nowPerf - startPerfRef.current!) / 1000;
+      const elapsedMsNow = Math.floor(elapsedSec * 1000);
+      setElapsedMs(elapsedMsNow);
 
-    return () => clearInterval(timer);
-  }, [intervalMs, totalTypedCount]);
+      if (nowPerf - lastCpmUpdateRef.current >= intervalMs) {
+        const cpmVal =
+          elapsedSec > 0 ? Math.round((totalTypedCount / elapsedSec) * 60) : 0;
+        setCpm(cpmVal);
+        lastCpmUpdateRef.current = nowPerf;
+      }
 
-  useEffect(() => {
-    if (!startTime) return;
+      rafRef.current = requestAnimationFrame(loop);
+    };
 
-    const timer = setInterval(() => {
-      setElapsedMs(Date.now() - startTime);
-    }, 1000);
+    lastCpmUpdateRef.current = performance.now();
+    rafRef.current = requestAnimationFrame(loop);
 
-    return () => clearInterval(timer);
-  }, [startTime]);
-
-  useEffect(() => {
-    const accVal =
-      totalTypedCount > 0 ? (totalCorrectCount / totalTypedCount) * 100 : 100;
-    setAccuracy(Math.round(accVal * 10) / 10);
-    setErrorCount(totalErrorCount);
-    console.log(totalTypedCount + "totle typed");
-
-    if (totalCharacterCount > 0) {
-      let ratio = (totalTypedCount / totalCharacterCount) * 100;
-      ratio = Math.round(ratio * 10) / 10;
-      if (ratio >= 98) ratio = 100;
-      setProgress(ratio);
-    } else {
-      setProgress(0);
-    }
-  }, [
-    totalTypedCount,
-    totalCorrectCount,
-    totalErrorCount,
-    totalCharacterCount,
-  ]);
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
+  }, [totalTypedCount, intervalMs]);
 
   const elapsedTime = formatTime(elapsedMs);
 
+  // ------------------------------------------------------------------
+  // 7. 반환값
+  // ------------------------------------------------------------------
   return {
     cpm,
     accuracy,
-    errorCount,
+    errorCount: totalErrorCount,
     totalTypedCount,
     elapsedMs,
     elapsedTime,
@@ -117,7 +161,9 @@ export function useTypingStats(intervalMs = 500) {
   };
 }
 
-/** ⏱ ms → "MM:SS" 변환 */
+// ------------------------------------------------------------------
+// ⏱ ms → "MM:SS" 포맷터
+// ------------------------------------------------------------------
 function formatTime(ms: number) {
   const totalSec = Math.floor(ms / 1000);
   const min = String(Math.floor(totalSec / 60)).padStart(2, "0");
