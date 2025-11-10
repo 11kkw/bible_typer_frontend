@@ -1,4 +1,5 @@
 import { Toaster } from "@/components/ui/sonner";
+import { TypingProgressResetter } from "@/features/typing/components/TypingProgressResetter";
 import { AuthProvider } from "@/providers/AuthProvider";
 import ReactQueryProvider from "@/providers/ReactQueryProvider";
 import type { Metadata } from "next";
@@ -48,6 +49,7 @@ export default function RootLayout({
       <body className="bg-background text-foreground font-sans antialiased">
         <ReactQueryProvider>
           <AuthProvider>
+            <TypingProgressResetter />
             {children}
             <Toaster richColors closeButton />
           </AuthProvider>

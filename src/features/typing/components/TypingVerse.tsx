@@ -112,6 +112,7 @@ export function TypingVerse({
           <TypingText
             verseId={verse.id}
             highlightSpaceIndices={highlightSpaceIndices}
+            isActive={!!isActive}
           />
         </div>
 

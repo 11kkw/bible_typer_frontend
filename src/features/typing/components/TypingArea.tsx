@@ -42,8 +42,7 @@ export function TypingArea({ initialVerses }: { initialVerses: Verse[] }) {
     }
   );
   const resetAllTyping = useTypingStore((state) => state.resetAll);
-  const { cpm, accuracy, elapsedTime, progress, totalTypedCount } =
-    useTypingStats();
+  const { cpm, accuracy, elapsedTime } = useTypingStats();
 
   const { setBookStats } = useVerseSelectStore(
     (state) => ({
@@ -77,12 +76,6 @@ export function TypingArea({ initialVerses }: { initialVerses: Verse[] }) {
     return `${versionPrefix}${selectedBookTitle} ${rangeLabel}`;
   }, [selectedVersionName, selectedBookTitle, chapterStart, chapterEnd]);
 
-  useEffect(() => {
-    if (progress >= 100 && totalTypedCount > 0) {
-      setCompleteModalOpen(true);
-    }
-  }, [progress, totalTypedCount]);
-
   const modalTitle =
     selectionLabel ||
     verses[0]?.book_title?.trim() ||
@@ -109,8 +102,6 @@ export function TypingArea({ initialVerses }: { initialVerses: Verse[] }) {
       totalCharacterCount: chapterCharacterCount,
     });
   }, [verses, setBookStats]);
-
-  const wpm = useMemo(() => Math.max(0, Math.round((cpm || 0) / 5)), [cpm]);
 
   const handleRetry = () => {
     resetAllTyping();
@@ -154,7 +145,7 @@ export function TypingArea({ initialVerses }: { initialVerses: Verse[] }) {
         title={`${modalTitle}`}
         description={`${modalDescription} 구절을 모두 입력했어요.`}
         stats={{
-          wpm,
+          cpm,
           accuracy,
           time: elapsedTime,
         }}

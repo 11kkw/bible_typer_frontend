@@ -8,6 +8,7 @@ import { TypedChar } from "../types";
 interface TypingTextProps {
   verseId: number;
   highlightSpaceIndices?: Set<number>;
+  isActive?: boolean;
 }
 
 const EMPTY_TYPED = Object.freeze([]) as unknown as TypedChar[];
@@ -16,6 +17,7 @@ const EMPTY_SET = Object.freeze(new Set<number>());
 export function TypingText({
   verseId,
   highlightSpaceIndices = EMPTY_SET,
+  isActive = false,
 }: TypingTextProps) {
   const typedList = useTypingStore(
     (s) => s.userTypedMap[verseId] ?? EMPTY_TYPED
@@ -84,9 +86,12 @@ export function TypingText({
       className="typed-text whitespace-pre-wrap relative z-20"
     >
       {typedList.map(({ char, status }, i) => {
-        const isResolved = status === "correct" || status === "incorrect";
+        const isCorrect = status === "correct";
+        const isIncorrect = status === "incorrect";
         const shouldHighlightSpace =
-          char === " " && combinedHighlight.has(i) && !isResolved;
+          combinedHighlight.has(i) && !isCorrect;
+        const underlineColor =
+          isIncorrect || !isActive ? "text-red-500" : "text-emerald-500";
         return (
           <span
             key={i}
@@ -104,7 +109,7 @@ export function TypingText({
             {shouldHighlightSpace && (
               <span
                 aria-hidden="true"
-                className="pointer-events-none absolute -bottom-1 left-1/2 flex w-6 -translate-x-1/2 translate-x-[2px] justify-center font-semibold text-emerald-500 leading-none"
+                className={`pointer-events-none absolute -bottom-1 left-1/2 flex w-6 -translate-x-1/2 translate-x-[2px] justify-center font-semibold leading-none ${underlineColor}`}
               >
                 __
               </span>

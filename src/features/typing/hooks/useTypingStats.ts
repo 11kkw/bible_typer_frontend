@@ -7,6 +7,8 @@ export function useTypingStats(intervalMs = 500) {
   const userTypedMap = useTypingStore((s) => s.userTypedMap);
   const origDecomposedMap = useTypingStore((s) => s.origDecomposedMap);
   const prevKeyRef = useRef<string>("");
+  const [sessionBaseline, setSessionBaseline] = useState(0);
+  const wasCompleteRef = useRef(false);
 
   // ------------------------------------------------------------------
   // 1. 상태 선택 (Zustand + shallow)
@@ -17,6 +19,7 @@ export function useTypingStats(intervalMs = 500) {
     chapterStart,
     chapterEnd,
     totalCharacterCount,
+    selectionTotalCharacterCount,
   } = useVerseSelectStore(
     (s) => ({
       selectedVersionId: s.selectedVersionId,
@@ -24,6 +27,7 @@ export function useTypingStats(intervalMs = 500) {
       chapterStart: s.chapterStart,
       chapterEnd: s.chapterEnd,
       totalCharacterCount: s.totalCharacterCount,
+      selectionTotalCharacterCount: s.selectionTotalCharacterCount,
     }),
     shallow
   );
@@ -64,8 +68,23 @@ export function useTypingStats(intervalMs = 500) {
   }, [totalTypedCount, totalCorrectCount]);
 
   const totalTargetCount = useMemo(() => {
-    return totalOriginalCount || totalCharacterCount;
-  }, [totalOriginalCount, totalCharacterCount]);
+    if (selectionTotalCharacterCount > 0) {
+      return selectionTotalCharacterCount;
+    }
+    if (totalCharacterCount > 0) {
+      return totalCharacterCount;
+    }
+    return totalOriginalCount;
+  }, [totalOriginalCount, totalCharacterCount, selectionTotalCharacterCount]);
+
+  const netTypedCount = useMemo(() => {
+    return Math.max(totalTypedCount - sessionBaseline, 0);
+  }, [totalTypedCount, sessionBaseline]);
+
+  const isSessionComplete = useMemo(() => {
+    if (totalTargetCount <= 0) return false;
+    return totalTypedCount >= totalTargetCount;
+  }, [totalTargetCount, totalTypedCount]);
 
   const progress = useMemo(() => {
     if (totalTargetCount <= 0) return 0;
@@ -107,12 +126,29 @@ export function useTypingStats(intervalMs = 500) {
   // 5. 첫 입력 시 타이머 시작
   // ------------------------------------------------------------------
   useEffect(() => {
-    if (totalTypedCount > 0 && !startPerfRef.current) {
+    if (!startPerfRef.current && totalTypedCount < sessionBaseline) {
+      setSessionBaseline(totalTypedCount);
+    }
+  }, [totalTypedCount, sessionBaseline]);
+
+  useEffect(() => {
+    if (
+      isSessionComplete &&
+      !wasCompleteRef.current &&
+      totalTypedCount > 0
+    ) {
+      setSessionBaseline(totalTypedCount);
+    }
+    wasCompleteRef.current = isSessionComplete;
+  }, [isSessionComplete, totalTypedCount]);
+
+  useEffect(() => {
+    if (netTypedCount > 0 && !startPerfRef.current) {
       const now = performance.now();
       startPerfRef.current = now;
       setStartTime(Date.now());
     }
-  }, [totalTypedCount]);
+  }, [netTypedCount]);
 
   // ------------------------------------------------------------------
   // 6. requestAnimationFrame 루프 (elapsed + CPM)
@@ -128,7 +164,7 @@ export function useTypingStats(intervalMs = 500) {
 
       if (nowPerf - lastCpmUpdateRef.current >= intervalMs) {
         const cpmVal =
-          elapsedSec > 0 ? Math.round((totalTypedCount / elapsedSec) * 60) : 0;
+          elapsedSec > 0 ? Math.round((netTypedCount / elapsedSec) * 60) : 0;
         setCpm(cpmVal);
         lastCpmUpdateRef.current = nowPerf;
       }
@@ -142,20 +178,44 @@ export function useTypingStats(intervalMs = 500) {
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  }, [totalTypedCount, intervalMs]);
+  }, [netTypedCount, intervalMs]);
 
   useEffect(() => {
-    if (progress < 100) return;
+    if (!isSessionComplete) return;
 
     if (rafRef.current) {
       cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
     }
     startPerfRef.current = null;
-  }, [progress]);
+  }, [isSessionComplete]);
+
+  useEffect(() => {
+    if (progress < 100 || totalTypedCount === 0) return;
+
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
+    startPerfRef.current = null;
+  }, [progress, totalTypedCount]);
+
+  useEffect(() => {
+    if (totalTypedCount !== 0 || totalOriginalCount !== 0) return;
+
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
+    startPerfRef.current = null;
+    lastCpmUpdateRef.current = 0;
+    setCpm(0);
+    setElapsedMs(0);
+    setStartTime(null);
+  }, [totalTypedCount, totalOriginalCount]);
 
   const elapsedTime = formatTime(elapsedMs);
-
+  const elapsedMinutes = elapsedMs > 0 ? elapsedMs / 60000 : 0;
   // ------------------------------------------------------------------
   // 7. 반환값
   // ------------------------------------------------------------------

@@ -16,7 +16,8 @@ export function Header() {
     { href: "/setup", label: "말씀 선택" },
   ];
 
-  const { accuracy, totalTypedCount, elapsedTime, progress } = useTypingStats();
+  const { cpm, accuracy, errorCount, totalTypedCount, elapsedTime, progress } =
+    useTypingStats();
 
   const {
     selectedVersionName,
@@ -76,6 +77,8 @@ export function Header() {
           progress={progress}
           elapsedTime={elapsedTime}
           accuracy={accuracy}
+ 	      cpm={cpm}
+          errorCount={errorCount}
           currentRef={selectionLabel}
         />
       </div>

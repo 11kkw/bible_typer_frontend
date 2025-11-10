@@ -5,6 +5,8 @@ interface HeaderTypingStatsProps {
   currentRef?: string;
   elapsedTime?: string;
   accuracy?: number;
+  cpm?: number;
+  errorCount?: number;
   visible?: boolean;
 }
 
@@ -13,6 +15,8 @@ export function HeaderTypingStats({
   currentRef = "",
   elapsedTime = "00:00",
   accuracy = 100,
+  cpm = 0,
+  errorCount = 0,
   visible = false,
 }: HeaderTypingStatsProps) {
   const clampedProgress = Math.max(0, Math.min(progress, 100));
@@ -49,7 +53,7 @@ export function HeaderTypingStats({
             )}
           </div>
 
-          {/* 우측: 타이머 + 정확도 */}
+          {/* 우측: 타이머 + 정확도 + CPM */}
           <div className="flex items-center gap-4 text-muted-foreground/90">
             <div className="flex items-center gap-1.5">
               <span className="material-symbols-outlined text-[15px] text-muted-foreground/80 translate-y-[1px]">
@@ -61,10 +65,32 @@ export function HeaderTypingStats({
             </div>
 
             <div className="flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-[15px] text-muted-foreground/80 translate-y-[1px]">
-                check_circle
+              <span
+                className={`material-symbols-outlined text-[15px] translate-y-[1px] ${
+                  errorCount > 0
+                    ? "text-red-500"
+                    : "text-muted-foreground/80"
+                }`}
+              >
+                {errorCount > 0 ? "error" : "check_circle"}
               </span>
-              <span className="text-foreground font-semibold">{accuracy}%</span>
+              <span
+                className={`font-semibold ${
+                  errorCount > 0 ? "text-red-500" : "text-foreground"
+                }`}
+              >
+                {accuracy}%
+              </span>
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              <span className="material-symbols-outlined text-[15px] text-muted-foreground/80 translate-y-[1px]">
+                speed
+              </span>
+              <span className="text-foreground font-semibold">
+                {Math.max(0, Math.round(cpm))}
+              </span>
+              <span className="text-xs text-muted-foreground/70">CPM</span>
             </div>
           </div>
         </div>

@@ -11,7 +11,7 @@ interface SessionCompleteModalProps {
   title?: string;
   description?: string;
   stats: {
-    wpm: number;
+    cpm: number;
     accuracy: number;
     time: string;
   };
@@ -52,7 +52,7 @@ export function SessionCompleteModal({
 
         <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-3">
           {[
-            { label: "WPM", value: `${stats.wpm}` },
+            { label: "CPM", value: `${stats.cpm}` },
             { label: "Accuracy", value: `${stats.accuracy}%` },
             { label: "Time", value: stats.time || "00:00" },
           ].map((item) => (

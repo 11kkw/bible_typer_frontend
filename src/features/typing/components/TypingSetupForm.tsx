@@ -82,6 +82,7 @@ export default function TypingSetupForm({
       setBookStats({
         totalVerseCount: data.total_verse_count,
         totalCharacterCount: data.total_character_count,
+        scope: "selection",
       });
 
       router.push("/");

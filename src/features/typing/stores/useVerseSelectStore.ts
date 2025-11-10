@@ -20,6 +20,8 @@ export interface VerseSelectState {
   chapterEnd: number;
   totalVerseCount: number;
   totalCharacterCount: number;
+  selectionTotalVerseCount: number;
+  selectionTotalCharacterCount: number;
 
   // ✅ 페이지 관련 상태
   currentPage: number;
@@ -33,6 +35,7 @@ export interface VerseSelectState {
   setBookStats: (data: {
     totalVerseCount: number;
     totalCharacterCount: number;
+    scope?: "page" | "selection";
   }) => void;
 
   setChapterStart: (start: number) => void;
@@ -71,8 +74,9 @@ export const useVerseSelectStore = createWithEqualityFn<VerseSelectState>()(
     chapterEnd: 1,
     totalVerseCount: 0,
     totalCharacterCount: 0,
+    selectionTotalVerseCount: 0,
+    selectionTotalCharacterCount: 0,
 
-    // ✅ 페이지 초기값
     currentPage: 1,
     totalPages: 1,
     hasNextPage: false,
@@ -98,6 +102,8 @@ export const useVerseSelectStore = createWithEqualityFn<VerseSelectState>()(
           hasPrevPage: false,
           totalVerseCount: 0,
           totalCharacterCount: 0,
+          selectionTotalVerseCount: 0,
+          selectionTotalCharacterCount: 0,
         };
       }),
 
@@ -116,13 +122,33 @@ export const useVerseSelectStore = createWithEqualityFn<VerseSelectState>()(
           hasPrevPage: false,
           totalVerseCount: 0,
           totalCharacterCount: 0,
+          selectionTotalVerseCount: 0,
+          selectionTotalCharacterCount: 0,
         };
       }),
 
-    setBookStats: (data) =>
-      set({
-        totalVerseCount: data.totalVerseCount,
-        totalCharacterCount: data.totalCharacterCount,
+    setBookStats: ({ totalVerseCount, totalCharacterCount, scope = "page" }) =>
+      set((state) => {
+        if (scope === "selection") {
+          return {
+            totalVerseCount,
+            totalCharacterCount,
+            selectionTotalVerseCount: totalVerseCount,
+            selectionTotalCharacterCount: totalCharacterCount,
+          };
+        }
+        return {
+          totalVerseCount,
+          totalCharacterCount,
+          selectionTotalVerseCount:
+            state.selectionTotalVerseCount > 0
+              ? state.selectionTotalVerseCount
+              : 0,
+          selectionTotalCharacterCount:
+            state.selectionTotalCharacterCount > 0
+              ? state.selectionTotalCharacterCount
+              : 0,
+        };
       }),
 
     setChapterStart: (start) =>
@@ -139,13 +165,16 @@ export const useVerseSelectStore = createWithEqualityFn<VerseSelectState>()(
           hasPrevPage: false,
           totalVerseCount: 0,
           totalCharacterCount: 0,
+          selectionTotalVerseCount: 0,
+          selectionTotalCharacterCount: 0,
         };
       }),
 
     setChapterEnd: (end) =>
       set((state) => {
         clearTypingProgress();
-        const nextCurrent = state.currentChapter > end ? end : state.currentChapter;
+        const nextCurrent =
+          state.currentChapter > end ? end : state.currentChapter;
         return {
           chapterEnd: end,
           currentChapter: nextCurrent,
@@ -155,6 +184,8 @@ export const useVerseSelectStore = createWithEqualityFn<VerseSelectState>()(
           hasPrevPage: false,
           totalVerseCount: 0,
           totalCharacterCount: 0,
+          selectionTotalVerseCount: 0,
+          selectionTotalCharacterCount: 0,
         };
       }),
 
@@ -266,6 +297,8 @@ export const useVerseSelectStore = createWithEqualityFn<VerseSelectState>()(
           hasPrevPage: false,
           totalVerseCount: 0,
           totalCharacterCount: 0,
+          selectionTotalVerseCount: 0,
+          selectionTotalCharacterCount: 0,
         };
       }),
   }),
