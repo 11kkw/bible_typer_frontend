@@ -6,6 +6,7 @@ import { useTypingStore } from "../stores/useTypingStore";
 export function useTypingStats(intervalMs = 500) {
   const userTypedMap = useTypingStore((s) => s.userTypedMap);
   const origDecomposedMap = useTypingStore((s) => s.origDecomposedMap);
+  const isSessionFrozen = useTypingStore((s) => s.isSessionFrozen);
   const prevKeyRef = useRef<string>("");
   const [sessionBaseline, setSessionBaseline] = useState(0);
   const wasCompleteRef = useRef(false);
@@ -143,18 +144,19 @@ export function useTypingStats(intervalMs = 500) {
   }, [isSessionComplete, totalTypedCount]);
 
   useEffect(() => {
+    if (isSessionFrozen) return;
     if (netTypedCount > 0 && !startPerfRef.current) {
       const now = performance.now();
       startPerfRef.current = now;
       setStartTime(Date.now());
     }
-  }, [netTypedCount]);
+  }, [netTypedCount, isSessionFrozen]);
 
   // ------------------------------------------------------------------
   // 6. requestAnimationFrame 루프 (elapsed + CPM)
   // ------------------------------------------------------------------
   useEffect(() => {
-    if (!startPerfRef.current) return;
+    if (!startPerfRef.current || isSessionFrozen) return;
 
     const loop = () => {
       const nowPerf = performance.now();
@@ -178,7 +180,16 @@ export function useTypingStats(intervalMs = 500) {
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  }, [netTypedCount, intervalMs]);
+  }, [netTypedCount, intervalMs, isSessionFrozen]);
+
+  useEffect(() => {
+    if (!isSessionFrozen) return;
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
+    startPerfRef.current = null;
+  }, [isSessionFrozen]);
 
   useEffect(() => {
     if (!isSessionComplete) return;

@@ -16,11 +16,16 @@ interface TypingState {
 
   origDecomposedMap: Record<number, HangulChar[]>;
 
+  /** 세션 완료 후 측정 정지 여부 */
+  isSessionFrozen: boolean;
+
   setUserTyped: (id: number, chars: TypedChar[]) => void;
 
   setUserDecomposed: (id: number, decomposed: HangulChar[]) => void;
 
   setOrigDecomposed: (id: number, decomposed: HangulChar[]) => void;
+
+  setSessionFrozen: (frozen: boolean) => void;
 
   resetAll: () => void;
 }
@@ -29,6 +34,7 @@ export const useTypingStore = create<TypingState>((set) => ({
   userTypedMap: {},
   userDecomposedMap: {},
   origDecomposedMap: {},
+  isSessionFrozen: false,
 
   // ✅ 순수 setter들
   setUserTyped: (id, chars) =>
@@ -46,11 +52,14 @@ export const useTypingStore = create<TypingState>((set) => ({
       origDecomposedMap: { ...state.origDecomposedMap, [id]: decomposed },
     })),
 
+  setSessionFrozen: (frozen) => set({ isSessionFrozen: frozen }),
+
   // ✅ 전체 초기화
   resetAll: () =>
     set({
       userTypedMap: {},
       userDecomposedMap: {},
       origDecomposedMap: {},
+      isSessionFrozen: false,
     }),
 }));

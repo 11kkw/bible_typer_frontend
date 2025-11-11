@@ -93,15 +93,18 @@ export const TypingInput = forwardRef<HTMLTextAreaElement, TypingInputProps>(
         spellCheck={false}
         className="
           absolute inset-0 w-full h-full
-          text-3xl leading-relaxed font-normal
+          text-3xl font-normal
           text-transparent caret-[#68D391]
           bg-transparent border-none resize-none outline-none
           whitespace-pre-wrap break-all tracking-normal
           overflow-hidden
+          pr-3 sm:pr-4 lg:pr-8
           [user-select:text!important]
         "
         style={{
-          padding: 0,
+          paddingTop: 0,
+          paddingBottom: 0,
+          paddingLeft: 0,
           lineHeight: "1.625",
           letterSpacing: "normal",
           fontFamily: "inherit",

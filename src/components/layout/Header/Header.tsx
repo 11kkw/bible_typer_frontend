@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { shallow } from "zustand/shallow";
 
 import { useTypingStats } from "@/features/typing/hooks/useTypingStats";
+import { useTypingStore } from "@/features/typing/stores/useTypingStore";
 import { useVerseSelectStore } from "@/features/typing/stores/useVerseSelectStore";
 import Link from "next/link";
 import { HeaderNav } from "./HeaderNav";
@@ -24,12 +25,14 @@ export function Header() {
     selectedBookTitle,
     chapterStart,
     chapterEnd,
+    reset,
   } = useVerseSelectStore(
     (state) => ({
       selectedVersionName: state.selectedVersionName,
       selectedBookTitle: state.selectedBookTitle,
       chapterStart: state.chapterStart,
       chapterEnd: state.chapterEnd,
+      reset: state.reset,
     }),
     shallow
   );
@@ -50,6 +53,12 @@ export function Header() {
   ]);
 
   const hasInput = totalTypedCount > 0;
+  const resetTyping = useTypingStore((state) => state.resetAll);
+
+  const handleHomeClick = () => {
+    resetTyping();
+    reset();
+  };
 
   return (
     <header className="sticky top-0 z-30 w-full bg-background/80 backdrop-blur-lg">
@@ -57,7 +66,11 @@ export function Header() {
         <div className="container-wide">
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center gap-8">
-              <Link href="/" className="flex items-center gap-2">
+              <Link
+                href="/"
+                onClick={handleHomeClick}
+                className="flex items-center gap-2"
+              >
                 <span className="material-symbols-outlined text-2xl text-primary/80 leading-none">
                   keyboard
                 </span>

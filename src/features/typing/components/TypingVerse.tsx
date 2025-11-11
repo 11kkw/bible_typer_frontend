@@ -25,41 +25,22 @@ export function TypingVerse({
 }: TypingVerseProps) {
   const inputRef = useRef<HTMLTextAreaElement>(null); // ✅ useRef 정상 작동
   const { setOrigDecomposed, origDecomposedMap } = useTypingStore();
-  const highlightSpaceIndices = useMemo(() => {
-    if (!verse.text) return new Set<number>();
-    const chars = Array.from(verse.text);
-    const spaces = new Set<number>();
-
-    for (let i = 0; i < chars.length - 1; i++) {
-      const curr = chars[i];
-      const next = chars[i + 1];
-      const nextNext = chars[i + 2];
-      const isSpace = curr === " ";
-      const nextIsLineBreak =
-        next === "\n" ||
-        next === "\r" ||
-        (next === "\r" && nextNext === "\n");
-
-      if (isSpace && nextIsLineBreak) {
-        spaces.add(i);
-      }
-    }
-
-    return spaces;
-  }, [verse.text]);
   const referenceLabel = useMemo(() => {
     const bookTitle = verse.book_title?.trim();
     const chapterNumber =
       typeof verse.chapter_number === "number"
         ? verse.chapter_number
         : typeof verse.chapter === "number"
-          ? verse.chapter
-          : null;
+        ? verse.chapter
+        : null;
     const verseNumber =
       typeof verse.number === "number" ? verse.number : undefined;
 
     if (bookTitle && chapterNumber && verseNumber) {
-      return `${bookTitle.replace(/\s+/g, " ")} ${chapterNumber}장 ${verseNumber}절`;
+      return `${bookTitle.replace(
+        /\s+/g,
+        " "
+      )} ${chapterNumber}장 ${verseNumber}절`;
     }
 
     if (verse.bcv?.trim()) return verse.bcv.trim();
@@ -92,7 +73,7 @@ export function TypingVerse({
 
   return (
     <div
-      className={clsx("typing-verse space-y-3", className)}
+      className={clsx("typing-verse space-y-3 py-4", className)}
       onClick={onActivate}
     >
       {referenceLabel && (
@@ -101,19 +82,17 @@ export function TypingVerse({
         </div>
       )}
 
-      <div className="relative text-3xl leading-relaxed font-normal">
+      <div className="relative">
         {/* 회색 원문 */}
-        <div className="opacity-40 text-gray-400 pointer-events-none whitespace-pre-wrap break-all">
+        <div className="opacity-40 text-gray-400 whitespace-pre-wrap break-words text-3xl leading-[1.625] font-normal tracking-normal pr-3 sm:pr-4 lg:pr-8">
           {verse.text}
         </div>
 
         {/* 유저 입력 */}
-        <div className="absolute top-0 left-0 pointer-events-none">
-          <TypingText
-            verseId={verse.id}
-            highlightSpaceIndices={highlightSpaceIndices}
-            isActive={!!isActive}
-          />
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="whitespace-pre-wrap break-words text-3xl leading-[1.625] font-normal tracking-normal pr-3 sm:pr-4 lg:pr-8">
+            <TypingText verseId={verse.id} />
+          </div>
         </div>
 
         {/* 투명 입력창 */}

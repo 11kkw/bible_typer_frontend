@@ -27,9 +27,12 @@ export function TypingArea({ initialVerses }: { initialVerses: Verse[] }) {
     loadPrevPage,
   } = useVerseLoader(initialVerses);
 
+  const setSessionFrozen = useTypingStore((state) => state.setSessionFrozen);
+
   const handleSessionComplete = useCallback(() => {
+    setSessionFrozen(true);
     setCompleteModalOpen(true);
-  }, []);
+  }, [setSessionFrozen]);
 
   const { currentVerseIndex, goNext, goPrev, activate } = useTypingSession(
     verses,
@@ -105,15 +108,19 @@ export function TypingArea({ initialVerses }: { initialVerses: Verse[] }) {
 
   const handleRetry = () => {
     resetAllTyping();
+    setSessionFrozen(false);
     setCompleteModalOpen(false);
     activate(0);
     setResetKey((prev) => prev + 1);
   };
 
-  const handleNewVerse = () => {
+  const handleNewVerse = async () => {
     resetAllTyping();
+    setSessionFrozen(false);
     setCompleteModalOpen(false);
-    router.refresh();
+    activate(0);
+    setResetKey((prev) => prev + 1);
+    router.push("/setup");
   };
 
   if (isLoading) {
@@ -131,7 +138,7 @@ export function TypingArea({ initialVerses }: { initialVerses: Verse[] }) {
           <TypingVerse
             key={`${verse.id}-${resetKey}`}
             verse={verse}
-            className="mb-8 md:mb-12"
+            className="mb-4 md:mb-6"
             onNext={goNext}
             onPrev={goPrev}
             isActive={index === currentVerseIndex}
