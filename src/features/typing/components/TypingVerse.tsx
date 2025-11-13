@@ -4,6 +4,7 @@ import clsx from "clsx";
 import { useEffect, useMemo, useRef } from "react";
 import { useTypingStore } from "../stores/useTypingStore";
 import { TypingInput } from "./TypingInput";
+import { TypingGuideText } from "./TypingGuideText";
 import { TypingText } from "./TypingText";
 
 interface TypingVerseProps {
@@ -84,16 +85,24 @@ export function TypingVerse({
 
       <div className="relative">
         {/* 회색 원문 */}
-        <div className="opacity-40 text-gray-400 whitespace-pre-wrap break-words text-3xl leading-[1.625] font-normal tracking-normal pr-3 sm:pr-4 lg:pr-8">
+        <div className="opacity-40 text-gray-500 whitespace-pre-wrap break-words text-3xl leading-[1.625] font-normal tracking-normal pr-3 sm:pr-4 lg:pr-8">
           {verse.text}
         </div>
 
-        {/* 유저 입력 */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="whitespace-pre-wrap break-words text-3xl leading-[1.625] font-normal tracking-normal pr-3 sm:pr-4 lg:pr-8">
-            <TypingText verseId={verse.id} />
-          </div>
+        {/* 줄바꿈 가이드 */}
+        <div className="absolute inset-0 pointer-events-none z-30 pr-3 sm:pr-4 lg:pr-8">
+          <TypingGuideText
+            verseId={verse.id}
+            text={verse.text ?? ""}
+            className="text-transparent"
+          />
         </div>
+
+        {/* 유저 입력 오버레이 */}
+        <TypingText
+          verseId={verse.id}
+          className="absolute inset-0 pointer-events-none pr-3 sm:pr-4 lg:pr-8"
+        />
 
         {/* 투명 입력창 */}
         <TypingInput
