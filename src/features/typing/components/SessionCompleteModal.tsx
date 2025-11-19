@@ -1,13 +1,14 @@
 "use client";
 
 import { ReactNode } from "react";
+import Link from "next/link";
+import { useAuthStore } from "@/features/auth/stores/authStore";
 
 interface SessionCompleteModalProps {
   open: boolean;
   onClose?: () => void;
   onRetry?: () => void;
   onNewVerse?: () => void;
-  onSave?: () => void;
   title?: string;
   description?: string;
   stats: {
@@ -23,12 +24,13 @@ export function SessionCompleteModal({
   onClose,
   onRetry,
   onNewVerse,
-  onSave,
   title = "세션 완료",
-  description = "참고 구절을 모두 입력했어요. 기록을 저장할까요?",
+  description = "참고 구절을 모두 입력했어요.",
   stats,
   footer,
 }: SessionCompleteModalProps) {
+  const isLoggedIn = useAuthStore((state) => Boolean(state.access));
+
   if (!open) return null;
 
   return (
@@ -68,15 +70,6 @@ export function SessionCompleteModal({
           ))}
         </div>
 
-        <div className="mt-10">
-          <button
-            className="w-full rounded-xl bg-teal-300/80 px-6 py-3 text-sm font-semibold text-gray-900 shadow-sm transition-colors hover:bg-teal-300 sm:w-auto"
-            onClick={onSave ?? onClose}
-          >
-            타자 기록 저장
-          </button>
-        </div>
-
         <div className="mt-6 flex flex-col items-center justify-center gap-4 sm:flex-row">
           <button
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-gray-200 px-5 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-300 sm:w-auto"
@@ -96,25 +89,33 @@ export function SessionCompleteModal({
           </button>
         </div>
 
-        <div className="mt-8 rounded-2xl bg-teal-50 p-6">
-          <h3 className="text-lg font-semibold text-gray-900">
-            진행 상황을 저장하세요
-          </h3>
-          <p className="mt-2 text-sm text-gray-600">
-            계정을 만들고 로그인하면 기록을 보관하고 성장 곡선을 확인할 수
-            있어요.
-          </p>
-          {footer ?? (
-            <div className="mt-4 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <button className="w-full rounded-lg bg-gray-900 px-5 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-gray-800 sm:w-auto">
-                회원가입
-              </button>
-              <button className="w-full rounded-lg bg-white px-5 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-gray-200 transition-colors hover:bg-gray-50 sm:w-auto">
-                로그인
-              </button>
-            </div>
-          )}
-        </div>
+        {!isLoggedIn && (
+          <div className="mt-8 rounded-2xl bg-teal-50 p-6">
+            <h3 className="text-lg font-semibold text-gray-900">
+              진행 상황을 저장하세요
+            </h3>
+            <p className="mt-2 text-sm text-gray-600">
+              계정을 만들고 로그인하면 기록을 보관하고 성장 곡선을 확인할 수
+              있어요.
+            </p>
+            {footer ?? (
+              <div className="mt-4 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                <Link
+                  href="/signup"
+                  className="w-full rounded-lg bg-gray-900 px-5 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-gray-800 sm:w-auto text-center"
+                >
+                  회원가입
+                </Link>
+                <Link
+                  href="/login"
+                  className="w-full rounded-lg bg-white px-5 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-gray-200 transition-colors hover:bg-gray-50 sm:w-auto text-center"
+                >
+                  로그인
+                </Link>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

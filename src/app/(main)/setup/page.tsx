@@ -3,17 +3,23 @@ import { fetchBibleVersions } from "@/features/typing/services/bible.service";
 import { ReadingSection } from "@/features/user/components/ReadingSection";
 
 export default async function PracticePage() {
-  const versions = await fetchBibleVersions();
+  let versionResponse;
+  try {
+    versionResponse = await fetchBibleVersions();
+  } catch (error) {
+  }
+
+  const versionList = versionResponse?.results ?? [];
 
   return (
     <main className="w-full min-h-screen bg-background text-foreground">
       <div className="container-wide py-12 grid grid-cols-[2fr_3fr] gap-12">
         <div className="space-y-8">
-          <VerseSelectSection versions={versions.results} />
+          <VerseSelectSection versions={versionList} />
         </div>
 
         <div className="space-y-8">
-          <ReadingSection />
+          <ReadingSection versions={versionList} />
         </div>
       </div>
     </main>

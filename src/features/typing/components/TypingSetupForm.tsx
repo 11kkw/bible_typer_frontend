@@ -4,7 +4,13 @@ import { useBibleVersionDetail } from "@/features/typing/hooks/useBibleVersions"
 import { useVerseSelectStore } from "@/features/typing/stores/useVerseSelectStore";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { fetchBookStats } from "../services/book.service";
+import { createTypingSession } from "../services/typing.service";
+import { toast } from "sonner";
+import { useAuthStore } from "@/features/auth/stores/authStore";
+import {
+  prepareTypingSelection,
+  resolveChapterIds,
+} from "../utils/prepareTypingSelection";
 
 interface BibleVersion {
   id: number;
@@ -17,6 +23,7 @@ export default function TypingSetupForm({
   versions: BibleVersion[];
 }) {
   const router = useRouter();
+  const accessToken = useAuthStore((s) => s.access);
   const [isLoading, setIsLoading] = useState(false);
 
   const {
@@ -28,7 +35,8 @@ export default function TypingSetupForm({
     setBook,
     setChapterStart,
     setChapterEnd,
-    setBookStats, // ✅ Zustand setter 추가
+    setBookStats,
+    setServerSession,
   } = useVerseSelectStore();
 
   // ✅ 선택된 버전 상세 정보 가져오기
@@ -69,26 +77,48 @@ export default function TypingSetupForm({
   );
 
   const handleStartTyping = async () => {
-    if (!selectedBookId || !selectedVersionId) return;
+    if (selectedBookId == null || selectedVersionId == null) return;
 
     setIsLoading(true);
     try {
-      const data = await fetchBookStats(
+      const chapterIds = await resolveChapterIds(
         selectedBookId,
         chapterStart,
         chapterEnd
       );
 
-      setBookStats({
-        totalVerseCount: data.total_verse_count,
-        totalCharacterCount: data.total_character_count,
-        scope: "selection",
+      let createdSession = null;
+      if (accessToken) {
+        createdSession = await createTypingSession({
+          version: selectedVersionId,
+          book: selectedBookId,
+          start_chapter: chapterIds.startChapterId,
+          end_chapter: chapterIds.endChapterId,
+          status: "in_progress",
+          last_unfinished_verse: 0,
+        });
+      }
+
+      await prepareTypingSelection({
+        versionId: selectedVersionId,
+        versionName: versions.find((v) => v.id === selectedVersionId)?.name,
+        bookId: selectedBookId,
+        bookTitle: selectedBook?.title ?? null,
+        startChapterNumber: chapterStart,
+        endChapterNumber: chapterEnd,
+        startVerseNumber: 1,
+        session: createdSession,
+        resolvedChapterIds: chapterIds,
       });
 
       router.push("/");
     } catch (error) {
-      console.error("책 통계 불러오기 실패:", error);
-      alert("책 통계 불러오기 중 오류가 발생했습니다.");
+      toast.error("타자 세션을 시작하지 못했어요.", {
+        description:
+          error instanceof Error
+            ? error.message.replace("API Error", "서버 오류")
+            : "잠시 후 다시 시도해주세요.",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -225,7 +255,7 @@ export default function TypingSetupForm({
       <button
         type="button"
         onClick={handleStartTyping}
-        disabled={!selectedBookId || !selectedVersionId || isLoading}
+        disabled={selectedBookId == null || selectedVersionId == null || isLoading}
         className={`btn-primary w-full mt-2 py-3 px-6 text-base font-bold shadow-sm transition-transform duration-200 ${
           isLoading ? "opacity-70 cursor-wait" : "hover:scale-[1.02]"
         }`}

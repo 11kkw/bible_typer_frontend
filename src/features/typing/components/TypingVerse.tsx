@@ -107,6 +107,7 @@ export function TypingVerse({
         {/* 투명 입력창 */}
         <TypingInput
           verseId={verse.id}
+          text={verse.text ?? ""}
           ref={inputRef}
           onNext={onNext}
           onPrev={onPrev}

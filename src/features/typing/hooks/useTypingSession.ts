@@ -1,7 +1,10 @@
+import { createTypingVerseLog } from "@/features/typing/services/typing.service";
+import { useTypingLogStore } from "@/features/typing/stores/useTypingLogStore";
+import { useVerseSelectStore } from "@/features/typing/stores/useVerseSelectStore";
 import { Verse } from "@/types/models/bible";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { shallow } from "zustand/shallow";
-import { useVerseSelectStore } from "../stores/useVerseSelectStore";
+import { useTypingStore } from "../stores/useTypingStore";
 
 interface UseTypingSessionOptions {
   hasNextPage?: boolean;
@@ -16,13 +19,14 @@ export function useTypingSession(
   options?: UseTypingSessionOptions
 ) {
   const [currentVerseIndex, setCurrentIndex] = useState(0);
-  const { nextChapter, prevChapter, currentChapter, chapterEnd } =
+  const { nextChapter, prevChapter, currentChapter, chapterEnd, serverSession } =
     useVerseSelectStore(
       (state) => ({
         nextChapter: state.nextChapter,
         prevChapter: state.prevChapter,
         currentChapter: state.currentChapter,
         chapterEnd: state.chapterEnd,
+        serverSession: state.serverSession,
       }),
       shallow
     );
@@ -40,10 +44,7 @@ export function useTypingSession(
   // ✅ 구절 배열 변경 시 인덱스 초기화
   // ------------------------------------------------------------------
   useEffect(() => {
-    console.log("📖 verses 변경 감지:", verses.length, "개");
-
     if (currentVerseIndex >= verses.length) {
-      console.log("🔄 구절 길이 변경 → 인덱스 초기화 (0)");
       setCurrentIndex(0);
     }
   }, [verses, currentVerseIndex]);
@@ -63,22 +64,81 @@ export function useTypingSession(
   // ------------------------------------------------------------------
   // ✅ 다음 절로 이동
   // ------------------------------------------------------------------
+  const startVerseLogging = useTypingLogStore((s) => s.startVerseLogging);
+  const getVerseEvents = useTypingLogStore((s) => s.getVerseEvents);
+  const clearVerseLog = useTypingLogStore((s) => s.clearVerseLog);
+  const getBackspaceCount = useTypingLogStore((s) => s.getBackspaceCount);
+  const getTimeSpent = useTypingLogStore((s) => s.getTimeSpent);
+
+  const currentVerseId = verses[currentVerseIndex]?.id;
+  useEffect(() => {
+    if (currentVerseId != null) {
+      startVerseLogging(currentVerseId);
+    }
+  }, [currentVerseId, startVerseLogging]);
+
+  const uploadVerseLog = useCallback(
+    async (verse: Verse) => {
+      if (!serverSession) return;
+
+      const events = getVerseEvents(verse.id);
+      if (!events.length) return;
+
+      const typingState = useTypingStore.getState();
+      const typedChars = typingState.userTypedMap[verse.id] ?? [];
+      const totalTyped = typedChars.filter(
+        (c) => c.status === "correct" || c.status === "incorrect"
+      ).length;
+      const correctCount = typedChars.filter(
+        (c) => c.status === "correct"
+      ).length;
+      const incorrectCount = typedChars.filter(
+        (c) => c.status === "incorrect"
+      ).length;
+      const accuracy =
+        totalTyped > 0 ? (correctCount / totalTyped) * 100 : undefined;
+      const timeSpent = getTimeSpent(verse.id);
+      const speed =
+        totalTyped > 0 && timeSpent > 0 ? (totalTyped / timeSpent) * 60 : undefined;
+
+      try {
+        await createTypingVerseLog({
+          session: serverSession.id,
+          verse: verse.id,
+          accuracy:
+            accuracy != null ? Math.round(accuracy * 10) / 10 : undefined,
+          speed:
+            speed != null ? Math.round(speed * 10) / 10 : undefined,
+          error_count: incorrectCount,
+          backspace_count: getBackspaceCount(verse.id),
+          time_spent: timeSpent || undefined,
+          events,
+        });
+      } finally {
+        clearVerseLog(verse.id);
+      }
+    },
+    [
+      serverSession,
+      getVerseEvents,
+      getBackspaceCount,
+      getTimeSpent,
+      clearVerseLog,
+    ]
+  );
+
   const goNext = async () => {
     const nextIndex = currentVerseIndex + 1;
-    console.log("➡️ goNext 호출:", {
-      currentVerseIndex,
-      nextIndex,
-      versesLen: verses.length,
-    });
+
+    const currentVerse = verses[currentVerseIndex];
+    if (currentVerse) {
+      void uploadVerseLog(currentVerse);
+    }
 
     // 현재 페이지 마지막 절일 때
     if (nextIndex >= verses.length) {
-      console.log("📄 현재 페이지 마지막 절 도달");
-
       if (hasNextPage && loadNextPage) {
-        console.log("🌐 다음 페이지 요청 실행");
         await loadNextPage();
-        console.log("✅ 다음 페이지 로드 완료, 인덱스 0으로 초기화");
         setCurrentIndex(0);
         return;
       }
@@ -86,18 +146,15 @@ export function useTypingSession(
       const isLastChapter = currentChapter >= chapterEnd;
 
       if (!isLastChapter) {
-        console.log("📚 다음 장으로 이동 (nextChapter 호출)");
         nextChapter();
         // 다음 챕터로 넘어갈 땐 새 데이터의 첫 절부터 시작
         setCurrentIndex(0);
       } else {
-        console.log("🏁 모든 장/페이지 완료");
         onComplete?.();
       }
       return;
     }
 
-    console.log("➡️ 다음 절로 이동:", nextIndex);
     setCurrentIndex(nextIndex);
   };
 
@@ -106,29 +163,18 @@ export function useTypingSession(
   // ------------------------------------------------------------------
   const goPrev = async () => {
     const prevIndex = currentVerseIndex - 1;
-    console.log("⬅️ goPrev 호출:", {
-      currentVerseIndex,
-      prevIndex,
-      versesLen: verses.length,
-    });
 
     // 현재 페이지 첫 절일 때
     if (prevIndex < 0) {
-      console.log("📄 현재 페이지 첫 절 도달");
-
       if (hasPrevPage && loadPrevPage) {
-        console.log("🌐 이전 페이지 요청 실행");
         await loadPrevPage();
-        console.log("✅ 이전 페이지 로드 완료, 마지막 절로 이동");
         setCurrentIndex(verses.length - 1);
       } else {
-        console.log("📚 이전 장으로 이동 (prevChapter 호출)");
         prevChapter();
       }
       return;
     }
 
-    console.log("⬅️ 이전 절로 이동:", prevIndex);
     setCurrentIndex(prevIndex);
   };
 
@@ -140,16 +186,8 @@ export function useTypingSession(
       Math.max(index, 0),
       Math.max(verses.length - 1, 0)
     );
-    console.log("🎯 activate:", { requested: index, applied: clamped });
     setCurrentIndex(clamped);
   };
-
-  // ------------------------------------------------------------------
-  // ✅ 렌더 로그 (선택)
-  // ------------------------------------------------------------------
-  useEffect(() => {
-    console.log("🧭 현재 절 인덱스:", currentVerseIndex);
-  }, [currentVerseIndex]);
 
   // (전환 대기 로직 없음 - 원상 복구)
 

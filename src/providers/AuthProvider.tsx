@@ -28,6 +28,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const refreshRes = await fetch(refreshUrl, {
             method: "POST",
             credentials: "include", // refresh 쿠키 자동 전송
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ refresh: "cookie" }), // 서버는 쿠키를 우선 읽으므로 더미 값 전달
           });
 
           if (refreshRes.ok) {
@@ -45,7 +47,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // 2️⃣ access가 존재하면 사용자 정보 조회
         if (access) {
           const user = await apiClient("/auth/user/");
-          if (user) setUser(user);
+          if (user) {
+            setUser(user);
+          }
         }
       } catch {
         clearAuth();

@@ -7,6 +7,7 @@ import { useTypingStats } from "@/features/typing/hooks/useTypingStats";
 import { useTypingStore } from "@/features/typing/stores/useTypingStore";
 import { useVerseSelectStore } from "@/features/typing/stores/useVerseSelectStore";
 import Link from "next/link";
+import Image from "next/image";
 import { HeaderNav } from "./HeaderNav";
 import { HeaderTypingStats } from "./HeaderTypingStats";
 import { HeaderUserMenu } from "./HeaderUserMenu";
@@ -71,9 +72,13 @@ export function Header() {
                 onClick={handleHomeClick}
                 className="flex items-center gap-2"
               >
-                <span className="material-symbols-outlined text-2xl text-primary/80 leading-none">
-                  keyboard
-                </span>
+                <Image
+                  src="/fish-symbol.svg"
+                  alt="익투스 로고"
+                  width={32}
+                  height={32}
+                  priority
+                />
                 <h1 className="text-xl font-semibold tracking-tight leading-none text-foreground">
                   말씀 타자
                 </h1>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { shallow } from "zustand/shallow";
 
 import { Verse } from "@/types/models/bible";
@@ -89,6 +89,18 @@ export function TypingArea({ initialVerses }: { initialVerses: Verse[] }) {
       ? `${verses[0]?.book_title?.trim()} ${verses[0]?.chapter_number ?? verses[0]?.chapter ?? ""}장`
       : "랜덤 구절");
 
+  const verseRefs = useRef<Array<HTMLDivElement | null>>([]);
+
+  useEffect(() => {
+    const target = verseRefs.current[currentVerseIndex];
+    if (target) {
+      target.scrollIntoView({
+        behavior: currentVerseIndex === 0 ? "auto" : "smooth",
+        block: "center",
+      });
+    }
+  }, [currentVerseIndex, verses]);
+
   useEffect(() => {
     if (!verses?.length) {
       setBookStats({ totalVerseCount: 0, totalCharacterCount: 0 });
@@ -133,17 +145,21 @@ export function TypingArea({ initialVerses }: { initialVerses: Verse[] }) {
 
   return (
     <>
-      <div className="max-w-4xl w-full text-left py-16 md:py-24 relative">
+      <div className="max-w-4xl w-full text-left py-8 md:py-10 relative">
         {verses.map((verse, index) => (
-          <TypingVerse
+          <div
             key={`${verse.id}-${resetKey}`}
-            verse={verse}
-            className="mb-4 md:mb-6"
-            onNext={goNext}
-            onPrev={goPrev}
-            isActive={index === currentVerseIndex}
-            onActivate={() => activate(index)}
-          />
+            ref={(el) => (verseRefs.current[index] = el)}
+          >
+            <TypingVerse
+              verse={verse}
+              className="mb-4 md:mb-6"
+              onNext={goNext}
+              onPrev={goPrev}
+              isActive={index === currentVerseIndex}
+              onActivate={() => activate(index)}
+            />
+          </div>
         ))}
       </div>
 

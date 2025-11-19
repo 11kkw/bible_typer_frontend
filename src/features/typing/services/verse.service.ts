@@ -6,14 +6,23 @@ export async function fetchRandomVerses(count: number): Promise<Verse[]> {
   return apiClient(`/scriptures/verses/random/${count}/`, { method: "GET" });
 }
 
+export interface VerseListParams {
+  page?: number;
+  startVerse?: number;
+}
+
 export async function fetchVersesByBookAndChapter(
   bookId: number,
   chapterNumber: number,
-  page?: number
+  params?: VerseListParams
 ): Promise<PaginatedResponse<Verse>> {
-  const query = page ? `?page=${page}` : "";
+  const queryParams = new URLSearchParams();
+  if (params?.page) queryParams.set("page", String(params.page));
+  if (params?.startVerse) queryParams.set("start_verse", String(params.startVerse));
+  const query = queryParams.toString();
+  const suffix = query ? `?${query}` : "";
   return apiClient(
-    `/scriptures/books/${bookId}/chapters/${chapterNumber}/verses/${query}`,
+    `/scriptures/books/${bookId}/chapters/${chapterNumber}/verses/${suffix}`,
     { method: "GET" }
   );
 }

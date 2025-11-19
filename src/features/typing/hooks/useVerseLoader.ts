@@ -1,7 +1,7 @@
 // typing/hooks/useVerseLoader.ts
 "use client";
 
-import { useCallback, useEffect } from "react";
+import { useCallback } from "react";
 
 import { useVerseSelectStore } from "@/features/typing/stores/useVerseSelectStore";
 import { Verse } from "@/types/models/bible";
@@ -18,6 +18,7 @@ export function useVerseLoader(initialVerses: Verse[]) {
     hasPrevPage,
     nextPage,
     prevPage,
+    startVerse,
   } = useVerseSelectStore((s) => ({
     selectedBookId: s.selectedBookId,
     currentChapter: s.currentChapter,
@@ -28,12 +29,14 @@ export function useVerseLoader(initialVerses: Verse[]) {
     hasPrevPage: s.hasPrevPage,
     nextPage: s.nextPage,
     prevPage: s.prevPage,
+    startVerse: s.startVerse,
   }));
 
   const { verses, isLoading, error } = useVerseQuery({
     bookId: selectedBookId ?? undefined,
     chapter: currentChapter ?? undefined,
     page: currentPage,
+    startVerse: startVerse ?? undefined,
     initialData: initialVerses,
   });
 
@@ -42,54 +45,13 @@ export function useVerseLoader(initialVerses: Verse[]) {
 
   const loadNextPage = useCallback(async () => {
     if (!hasNextPage) return;
-    if (process.env.NODE_ENV !== "production") {
-      console.log(
-        "[useVerseLoader] loadNextPage",
-        "bookId",
-        selectedBookId,
-        "chapter",
-        currentChapter,
-        "currentPage",
-        currentPage + 1
-      );
-    }
     nextPage();
-  }, [hasNextPage, nextPage, currentPage, selectedBookId, currentChapter]);
+  }, [hasNextPage, nextPage]);
 
   const loadPrevPage = useCallback(async () => {
     if (!hasPrevPage) return;
-    if (process.env.NODE_ENV !== "production") {
-      console.log(
-        "[useVerseLoader] loadPrevPage",
-        "bookId",
-        selectedBookId,
-        "chapter",
-        currentChapter,
-        "currentPage",
-        Math.max(1, currentPage - 1)
-      );
-    }
     prevPage();
-  }, [hasPrevPage, prevPage, currentPage, selectedBookId, currentChapter]);
-
-  useEffect(() => {
-    if (process.env.NODE_ENV === "production") return;
-    console.log("[useVerseLoader] state", {
-      selectedBookId,
-      currentChapter,
-      currentPage,
-      hasNextPage,
-      hasPrevPage,
-      versesCount: verses.length,
-    });
-  }, [
-    selectedBookId,
-    currentChapter,
-    currentPage,
-    hasNextPage,
-    hasPrevPage,
-    verses,
-  ]);
+  }, [hasPrevPage, prevPage]);
 
   return {
     verses: isActive ? verses : initialVerses,

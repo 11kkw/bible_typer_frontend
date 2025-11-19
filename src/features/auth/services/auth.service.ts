@@ -21,3 +21,9 @@ export async function registerApi(
     body: JSON.stringify(data),
   });
 }
+
+export async function logoutApi(): Promise<void> {
+  await apiClient("/auth/logout/", {
+    method: "POST",
+  });
+}
